@@ -1,0 +1,64 @@
+import { useState, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { CardapioDia, ItemCompra, Receita } from '../types';
+
+const STORAGE_KEY = '@cardapio';
+
+const diasVazios = (): CardapioDia[] =>
+  Array.from({ length: 7 }, (_, i) => ({ diaSemana: i as CardapioDia['diaSemana'], receitaId: null }));
+
+export function useCardapio() {
+  const [cardapio, setCardapio] = useState<CardapioDia[]>(diasVazios());
+
+  useEffect(() => {
+    AsyncStorage.getItem(STORAGE_KEY).then((json) => {
+      if (json) setCardapio(JSON.parse(json));
+    });
+  }, []);
+
+  const salvarEAtualizar = useCallback((lista: CardapioDia[]) => {
+    setCardapio(lista);
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+  }, []);
+
+  const atribuir = useCallback(
+    (diaSemana: number, receitaId: string | null) => {
+      setCardapio((prev) => {
+        const lista = prev.map((d) =>
+          d.diaSemana === diaSemana ? { ...d, receitaId } : d
+        );
+        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
+        return lista;
+      });
+    },
+    []
+  );
+
+  const limpar = useCallback(() => {
+    const vazio = diasVazios();
+    salvarEAtualizar(vazio);
+  }, [salvarEAtualizar]);
+
+  const gerarListaCompras = useCallback(
+    (todasReceitas: Receita[]): ItemCompra[] => {
+      const mapa = new Map<string, ItemCompra>();
+      cardapio.forEach(({ receitaId }) => {
+        if (!receitaId) return;
+        const receita = todasReceitas.find((r) => r.id === receitaId);
+        if (!receita) return;
+        receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
+          const chave = `${nome.toLowerCase()}|${unidade}`;
+          if (mapa.has(chave)) {
+            mapa.get(chave)!.quantidade += quantidade;
+          } else {
+            mapa.set(chave, { nome, quantidade, unidade, categoria: receita.categoria });
+          }
+        });
+      });
+      return Array.from(mapa.values());
+    },
+    [cardapio]
+  );
+
+  return { cardapio, atribuir, limpar, gerarListaCompras };
+}
