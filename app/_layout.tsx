@@ -8,7 +8,7 @@ import '../global.css';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
+  const [loaded, error] = useFonts({
     PlayfairDisplay_700Bold,
     Inter_400Regular,
     Inter_500Medium,
@@ -16,10 +16,12 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
 
-  if (!loaded) return null;
+  if (!loaded && !error) return null;
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
