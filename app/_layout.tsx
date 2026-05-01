@@ -3,9 +3,33 @@ import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-d
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { AuthProvider, useAuth } from '../hooks/useAuth';
 import '../global.css';
 
 SplashScreen.preventAutoHideAsync();
+
+function RootNavigator() {
+  const { user, loading } = useAuth();
+
+  if (loading) return null;
+
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      {!user ? (
+        <Stack.Screen name="(auth)" />
+      ) : (
+        <>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="receita/nova" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="receita/[id]/index" />
+          <Stack.Screen name="receita/[id]/editar" options={{ presentation: 'modal' }} />
+        </>
+      )}
+    </Stack>
+  );
+}
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -16,19 +40,17 @@ export default function RootLayout() {
   });
 
   useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
+    if (loaded || error) SplashScreen.hideAsync();
   }, [loaded, error]);
 
   if (!loaded && !error) return null;
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="receita/nova" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="receita/[id]/index" />
-      <Stack.Screen name="receita/[id]/editar" options={{ presentation: 'modal' }} />
-    </Stack>
+    <AuthProvider>
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <RootNavigator />
+      </SafeAreaProvider>
+    </AuthProvider>
   );
 }
