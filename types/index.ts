@@ -1,6 +1,7 @@
 export type Dificuldade = 'Fácil' | 'Médio' | 'Difícil';
 
 export type Ingrediente = {
+  id?: string;
   nome: string;
   quantidade: number;
   unidade: string;
@@ -8,6 +9,7 @@ export type Ingrediente = {
 
 export type Receita = {
   id: string;
+  user_id?: string;
   nome: string;
   categoria: string;
   imagem?: string;
@@ -16,7 +18,17 @@ export type Receita = {
   dificuldade: Dificuldade;
   ingredientes: Ingrediente[];
   instrucoes: string[];
+  publica?: boolean;
   criadaEm: string;
+  atualizadaEm?: string;
+  _pendingSync?: boolean;
+};
+
+export type Profile = {
+  id: string;
+  nome: string;
+  foto_url?: string;
+  criado_em: string;
 };
 
 export type CardapioDia = {
