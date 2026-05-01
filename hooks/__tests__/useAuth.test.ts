@@ -13,10 +13,14 @@ const wrapper = ({ children }: { children: React.ReactNode }) =>
 describe('useAuth', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('começa com loading true e user null', () => {
+  it('começa com loading true e user null', async () => {
     (supabase.auth.getSession as jest.Mock).mockResolvedValue({ data: { session: null } });
     const { result } = renderHook(() => useAuth(), { wrapper });
     expect(result.current.loading).toBe(true);
+    expect(result.current.user).toBeNull();
+
+    await act(async () => {});
+    expect(result.current.loading).toBe(false);
     expect(result.current.user).toBeNull();
   });
 
