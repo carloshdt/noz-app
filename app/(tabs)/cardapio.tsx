@@ -110,13 +110,15 @@ export default function CardapioScreen() {
     fecharModal();
   }
 
-  function receitaDoDia(dia: number): { receita: Receita; porcoes: number } | undefined {
-    const pr = plano.receitas.find((r) => r.dias?.some((d) => d.dia === dia));
-    if (!pr) return undefined;
-    const receita = receitas.find((r) => r.id === pr.receitaId);
-    if (!receita) return undefined;
-    const porcoes = pr.dias?.find((d) => d.dia === dia)?.porcoes ?? 1;
-    return { receita, porcoes };
+  function receitasDoDia(dia: number): { receita: Receita; porcoes: number }[] {
+    return plano.receitas
+      .filter((pr) => pr.dias?.some((d) => d.dia === dia))
+      .flatMap((pr) => {
+        const receita = receitas.find((r) => r.id === pr.receitaId);
+        if (!receita) return [];
+        const porcoes = pr.dias?.find((d) => d.dia === dia)?.porcoes ?? 1;
+        return [{ receita, porcoes }];
+      });
   }
 
   return (
@@ -167,12 +169,12 @@ export default function CardapioScreen() {
           <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
           <View className="gap-2">
             {datas.map((data, i) => {
-              const info = receitaDoDia(i);
+              const infos = receitasDoDia(i);
               return (
                 <Pressable
                   key={i}
                   onPress={() => abrirModal(i)}
-                  className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${info ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
+                  className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${infos.length > 0 ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
                 >
                   <View className="items-center shrink-0" style={{ width: 44 }}>
                     <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center">
@@ -180,15 +182,15 @@ export default function CardapioScreen() {
                     </View>
                     <AppText className="text-primary text-[10px] mt-0.5">{NOMES_DIA[data.getDay()]}</AppText>
                   </View>
-                  <View className="flex-1">
-                    {info ? (
-                      <>
-                        <AppText variant="heading" className="text-[14px]">{info.receita.nome}</AppText>
+                  <View className="flex-1 gap-0.5">
+                    {infos.length > 0 ? infos.map(({ receita, porcoes }) => (
+                      <View key={receita.id}>
+                        <AppText variant="heading" className="text-[14px]">{receita.nome}</AppText>
                         <AppText variant="muted" className="text-[12px]">
-                          {info.porcoes} porção{info.porcoes > 1 ? 's' : ''}
+                          {porcoes} porção{porcoes > 1 ? 's' : ''}
                         </AppText>
-                      </>
-                    ) : (
+                      </View>
+                    )) : (
                       <AppText variant="muted" className="text-[13px]">Sem receita</AppText>
                     )}
                   </View>
