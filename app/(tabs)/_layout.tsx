@@ -1,6 +1,6 @@
 import { View, Pressable } from 'react-native';
-import { Tabs } from 'expo-router';
-import { useState } from 'react';
+import { Tabs, usePathname } from 'expo-router';
+import { useState, useEffect } from 'react';
 import { Menu, UtensilsCrossed, CalendarDays, ShoppingCart } from 'lucide-react-native';
 import { Drawer } from '../../components/Drawer';
 import { useAuth } from '../../hooks/useAuth';
@@ -9,7 +9,12 @@ import { useProfile } from '../../hooks/useProfile';
 export default function TabLayout() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, refreshProfile } = useProfile();
+  const pathname = usePathname();
+
+  useEffect(() => {
+    refreshProfile();
+  }, [pathname]);
 
   return (
     <View style={{ flex: 1 }}>
