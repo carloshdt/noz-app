@@ -119,8 +119,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#F3F4F6',
     marginBottom: 8,
+    alignItems: 'center',
   },
-  avatar: { width: 56, height: 56, borderRadius: 28, marginBottom: 12 },
+  avatar: { width: 80, height: 80, borderRadius: 40, marginBottom: 12 },
   avatarFallback: {
     backgroundColor: '#F3EDE8',
     alignItems: 'center',
