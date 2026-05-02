@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable, Modal, FlatList, Keyboard } from 'react-native';
+import { View, ScrollView, Pressable, Modal, FlatList, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { X, Trash2, ChevronDown } from 'lucide-react-native';
@@ -95,6 +95,11 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
 
   return (
     <SafeAreaView className="flex-1 bg-background">
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      >
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
         <AppText variant="heading">{titulo}</AppText>
         <Pressable onPress={() => router.back()}>
@@ -210,6 +215,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           />
         </SafeAreaView>
       </Modal>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
