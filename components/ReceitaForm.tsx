@@ -1,13 +1,14 @@
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { X, Trash2 } from 'lucide-react-native';
+import { X, Trash2, ChevronDown } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Receita, Ingrediente, Dificuldade } from '../types';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { AppText } from './ui/AppText';
 import { CATEGORIAS } from '../constants/categorias';
+import { UNIDADES } from '../constants/unidades';
 import { CategoriaChip } from './CategoriaChip';
 
 type FormData = Omit<Receita, 'id' | 'criadaEm'>;
@@ -32,7 +33,8 @@ const formVazio = (): FormData => ({
 
 export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const [form, setForm] = useState<FormData>(inicial ?? formVazio());
-  const [novoIng, setNovoIng] = useState({ nome: '', quantidade: '', unidade: '' });
+  const [novoIng, setNovoIng] = useState({ nome: '', quantidade: '', unidade: 'g' });
+  const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
 
   function adicionarIngrediente() {
@@ -120,7 +122,16 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
             <View className="flex-row gap-2">
               <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
               <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
-              <View className="w-20"><Input placeholder="Un" value={novoIng.unidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, unidade: v }))} /></View>
+              <Pressable
+                onPress={() => setModalUnidade(true)}
+                className="w-20 border border-border rounded-card bg-surface px-2 justify-center"
+                style={{ height: 44 }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <AppText className="text-[13px]" numberOfLines={1}>{novoIng.unidade || 'Un'}</AppText>
+                  <ChevronDown size={14} color="#8C7B6B" />
+                </View>
+              </Pressable>
             </View>
             <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
           </View>
@@ -147,6 +158,30 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           <Button label="Salvar receita" onPress={salvar} fullWidth />
         </View>
       </ScrollView>
+
+      <Modal visible={modalUnidade} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setModalUnidade(false)}>
+        <SafeAreaView className="flex-1 bg-background">
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-border">
+            <AppText variant="heading">Unidade</AppText>
+            <Pressable onPress={() => setModalUnidade(false)}>
+              <X size={22} color="#8C7B6B" />
+            </Pressable>
+          </View>
+          <FlatList
+            data={UNIDADES}
+            keyExtractor={(u) => u}
+            contentContainerStyle={{ padding: 8 }}
+            renderItem={({ item }) => (
+              <Pressable
+                onPress={() => { setNovoIng((n) => ({ ...n, unidade: item })); setModalUnidade(false); }}
+                className={`px-4 py-4 rounded-card mb-1 ${novoIng.unidade === item ? 'bg-primary/10' : ''}`}
+              >
+                <AppText className={novoIng.unidade === item ? 'text-primary font-sans-bold' : ''}>{item}</AppText>
+              </Pressable>
+            )}
+          />
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
