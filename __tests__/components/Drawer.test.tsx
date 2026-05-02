@@ -11,12 +11,6 @@ jest.mock('expo-router', () => ({
 jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ top: 44, bottom: 34, left: 0, right: 0 }),
 }));
-jest.mock('../../hooks/useConfiguracao', () => ({
-  useConfiguracao: () => ({ diaInicio: 'seg', setDiaInicio: jest.fn(), periodo: 'semanal', setPeriodo: jest.fn() }),
-}));
-jest.mock('@react-native-async-storage/async-storage', () =>
-  require('@react-native-async-storage/async-storage/jest/async-storage-mock')
-);
 
 const mockUser = { id: 'user-1', email: 'carlos@test.com' } as any;
 const mockProfile = { id: 'user-1', nome: 'Carlos', foto_url: null, criado_em: '2026-01-01' };
