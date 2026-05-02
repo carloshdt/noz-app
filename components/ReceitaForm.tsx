@@ -145,7 +145,12 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       <ScrollView ref={scrollRef} className="flex-1 px-4" contentContainerStyle={{ paddingVertical: 16, gap: 20 }} keyboardShouldPersistTaps="handled">
         <Pressable onPress={escolherImagemReceita}>
           {form.imagem ? (
-            <Image source={{ uri: form.imagem }} className="w-full rounded-card" style={{ height: 180 }} resizeMode="cover" />
+            <View>
+              <Image source={{ uri: form.imagem }} className="w-full rounded-card" style={{ height: 180 }} resizeMode="cover" />
+              <View className="absolute bottom-2 right-2 bg-black/50 rounded-full p-2">
+                <Camera size={16} color="white" />
+              </View>
+            </View>
           ) : (
             <View className="w-full rounded-card bg-surface border border-dashed border-border items-center justify-center gap-2" style={{ height: 140 }}>
               <Camera size={28} color="#8C7B6B" />
@@ -288,18 +293,9 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
             </View>
           ))}
           <View className="gap-2">
-            <Input placeholder="Descreva o passo..." value={novaInst} onChangeText={setNovaInst} multiline />
-            {novaInstImagem ? (
-              <View className="relative">
-                <Image source={{ uri: novaInstImagem }} className="w-full rounded-card" style={{ height: 120 }} resizeMode="cover" />
-                <Pressable onPress={() => setNovaInstImagem(undefined)} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
-                  <X size={14} color="white" />
-                </Pressable>
-              </View>
-            ) : null}
-            <View className="flex-row gap-2">
+            <View className="flex-row gap-2 items-start">
               <View className="flex-1">
-                <Button label="Adicionar passo" variant="secondary" onPress={adicionarInstrucao} />
+                <Input placeholder="Descreva o passo..." value={novaInst} onChangeText={setNovaInst} multiline />
               </View>
               <Pressable
                 onPress={escolherImagemPasso}
@@ -309,6 +305,15 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
                 <ImagePlus size={18} color="#8C7B6B" />
               </Pressable>
             </View>
+            {novaInstImagem ? (
+              <View className="relative">
+                <Image source={{ uri: novaInstImagem }} className="w-full rounded-card" style={{ height: 120 }} resizeMode="cover" />
+                <Pressable onPress={() => setNovaInstImagem(undefined)} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                  <X size={14} color="white" />
+                </Pressable>
+              </View>
+            ) : null}
+            <Button label="Adicionar passo" variant="secondary" onPress={adicionarInstrucao} />
           </View>
         </View>
 

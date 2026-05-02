@@ -11,12 +11,16 @@ export function useCardapio() {
   const STORAGE_KEY = user ? `@cardapio_${user.id}` : '@cardapio';
   const [cardapio, setCardapio] = useState<CardapioDia[]>(diasVazios());
 
-  useEffect(() => {
-    setCardapio(diasVazios());
+  const recarregar = useCallback(() => {
     AsyncStorage.getItem(STORAGE_KEY).then((json) => {
       if (json) setCardapio(JSON.parse(json));
       else setCardapio(diasVazios());
     });
+  }, [STORAGE_KEY]);
+
+  useEffect(() => {
+    setCardapio(diasVazios());
+    recarregar();
   }, [STORAGE_KEY]);
 
   const salvarEAtualizar = useCallback((lista: CardapioDia[]) => {
@@ -63,5 +67,5 @@ export function useCardapio() {
     [cardapio]
   );
 
-  return { cardapio, atribuir, limpar, gerarListaCompras };
+  return { cardapio, atribuir, limpar, gerarListaCompras, recarregar };
 }

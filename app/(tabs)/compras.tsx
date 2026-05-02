@@ -1,6 +1,7 @@
 import { View, FlatList, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import { useCardapio } from '../../hooks/useCardapio';
 import { useReceitas } from '../../hooks/useReceitas';
@@ -8,8 +9,10 @@ import { AppText } from '../../components/ui/AppText';
 import { ItemCompra } from '../../types';
 
 export default function ComprasScreen() {
-  const { receitas } = useReceitas();
-  const { gerarListaCompras } = useCardapio();
+  const { receitas, carregarReceitas } = useReceitas();
+  const { gerarListaCompras, recarregar } = useCardapio();
+
+  useFocusEffect(useCallback(() => { recarregar(); carregarReceitas(); }, [recarregar, carregarReceitas]));
   const [marcados, setMarcados] = useState<Set<string>>(new Set());
 
   const itens = useMemo(() => gerarListaCompras(receitas), [receitas, gerarListaCompras]);
