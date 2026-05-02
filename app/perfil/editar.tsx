@@ -36,8 +36,8 @@ export default function EditarPerfil() {
       setSalvando(true);
       await updateProfile(nome.trim(), fotoUri);
       router.back();
-    } catch {
-      Alert.alert('Erro', 'Não foi possível salvar. Tente novamente.');
+    } catch (e: any) {
+      Alert.alert('Erro', e?.message ?? JSON.stringify(e) ?? 'Não foi possível salvar.');
     } finally {
       setSalvando(false);
     }

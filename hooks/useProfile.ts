@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
+import * as FileSystem from 'expo-file-system';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types';
 import { useAuth } from './useAuth';
@@ -46,11 +47,18 @@ export function useProfile() {
     if (fotoUri) {
       const ext = fotoUri.split('.').pop()?.toLowerCase() ?? 'jpg';
       const path = `${user.id}/avatar.${ext}`;
-      const response = await fetch(fotoUri);
-      const blob = await response.blob();
+      const base64 = await FileSystem.readAsStringAsync(fotoUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const binaryStr = atob(base64);
+      const bytes = new Uint8Array(binaryStr.length);
+      for (let i = 0; i < binaryStr.length; i++) {
+        bytes[i] = binaryStr.charCodeAt(i);
+      }
+      const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(path, blob, { upsert: true, contentType: `image/${ext === 'jpg' ? 'jpeg' : ext}` });
+        .upload(path, bytes, { upsert: true, contentType });
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage
         .from('avatars')

@@ -3,6 +3,10 @@ import { useProfile } from '../../hooks/useProfile';
 import { supabase } from '../../lib/supabase';
 
 jest.mock('../../lib/supabase');
+jest.mock('expo-file-system', () => ({
+  readAsStringAsync: jest.fn().mockResolvedValue('base64data'),
+  EncodingType: { Base64: 'base64' },
+}));
 jest.mock('../../hooks/useAuth', () => ({
   useAuth: () => ({ user: { id: 'user-1', email: 'carlos@test.com', user_metadata: { nome: 'Carlos' } } }),
 }));
