@@ -3,7 +3,7 @@
     "name": "recipe-app",
     "slug": "recipe-app",
     "version": "1.0.0",
-    "scheme": "recipe-app",
+    "scheme": "noz",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,7 +29,8 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
