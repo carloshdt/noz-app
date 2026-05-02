@@ -25,7 +25,7 @@ export default function CadastroScreen() {
     }
     try {
       setLoading(true);
-      await signUp(nome.trim(), email.trim(), senha);
+      await signUp(nome.trim(), email.trim(), senha.trim());
     } catch (e: any) {
       Alert.alert('Erro', e.message ?? 'Não foi possível criar a conta. Tente novamente.');
     } finally {
