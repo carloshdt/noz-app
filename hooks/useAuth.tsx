@@ -1,7 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import * as WebBrowser from 'expo-web-browser';
-import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from 'expo-linking';
 import { supabase } from '../lib/supabase';
 
@@ -38,7 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signInWithOAuthProvider = async (provider: 'google' | 'apple') => {
-    const redirectTo = makeRedirectUri();
+    // Linking.createURL works in both Expo Go (exp://) and production (noz://)
+    const redirectTo = Linking.createURL('/');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: { redirectTo, skipBrowserRedirect: true },
@@ -48,12 +48,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
     if (result.type === 'success') {
-      const parsed = Linking.parse(result.url);
-      const access_token = parsed.queryParams?.access_token as string;
-      const refresh_token = parsed.queryParams?.refresh_token as string;
-      if (access_token && refresh_token) {
-        await supabase.auth.setSession({ access_token, refresh_token });
-      }
+      // PKCE flow: exchange code for session using the full redirect URL
+      await supabase.auth.exchangeCodeForSession(result.url);
     }
   };
 
