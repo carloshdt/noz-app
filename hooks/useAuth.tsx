@@ -12,7 +12,7 @@ type AuthContextType = {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, senha: string) => Promise<void>;
-  signUp: (nome: string, email: string, senha: string) => Promise<void>;
+  signUp: (nome: string, email: string, senha: string) => Promise<boolean>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 };
@@ -61,13 +61,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) throw error;
   };
 
-  const signUp = async (nome: string, email: string, senha: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signUp = async (nome: string, email: string, senha: string): Promise<boolean> => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password: senha,
       options: { data: { nome } },
     });
     if (error) throw error;
+    // returns true if email confirmation is required (no session yet)
+    return !data.session;
   };
 
   const signOut = async () => {
