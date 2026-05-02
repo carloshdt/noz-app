@@ -18,7 +18,7 @@ const receita: Receita = {
   dificuldade: 'Fácil',
   ingredientes: [
     { nome: 'Frango', quantidade: 500, unidade: 'g' },
-    { nome: 'Sal', quantidade: 1, unidade: 'pitada' },
+    { nome: 'Ovo', quantidade: 2, unidade: 'un' },
   ],
   instrucoes: [{ texto: 'Grelhar' }],
   criadaEm: '2026-01-01',
@@ -27,37 +27,65 @@ const receita: Receita = {
 describe('useCardapio', () => {
   beforeEach(() => AsyncStorage.clear());
 
-  it('começa com 7 dias todos nulos', async () => {
+  it('começa com plano vazio', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
-    expect(result.current.cardapio).toHaveLength(7);
-    expect(result.current.cardapio.every((d) => d.receitaId === null)).toBe(true);
+    expect(result.current.plano.receitas).toHaveLength(0);
   });
 
-  it('atribui receita a um dia', async () => {
+  it('adiciona receita com 1 batch', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
-    await act(async () => { result.current.atribuir(1, '1'); });
-    expect(result.current.cardapio[1].receitaId).toBe('1');
+    await act(async () => { result.current.adicionarReceita('1', 1); });
+    expect(result.current.plano.receitas).toHaveLength(1);
+    expect(result.current.plano.receitas[0].batches).toBe(1);
   });
 
-  it('limpa o cardápio', async () => {
+  it('adiciona receita com dias atribuídos', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
-    await act(async () => { result.current.atribuir(0, '1'); });
+    await act(async () => { result.current.adicionarReceita('1', 1, [0, 2]); });
+    expect(result.current.plano.receitas[0].dias).toEqual([0, 2]);
+  });
+
+  it('remove receita', async () => {
+    const { result } = renderHook(() => useCardapio());
+    await act(async () => {});
+    await act(async () => { result.current.adicionarReceita('1', 1); });
+    await act(async () => { result.current.removerReceita('1'); });
+    expect(result.current.plano.receitas).toHaveLength(0);
+  });
+
+  it('limpa plano', async () => {
+    const { result } = renderHook(() => useCardapio());
+    await act(async () => {});
+    await act(async () => { result.current.adicionarReceita('1', 2); });
     await act(async () => { result.current.limpar(); });
-    expect(result.current.cardapio.every((d) => d.receitaId === null)).toBe(true);
+    expect(result.current.plano.receitas).toHaveLength(0);
   });
 
-  it('gera lista de compras agrupando ingredientes iguais', async () => {
+  it('gera lista sem frações usando batches', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
-    await act(async () => {
-      result.current.atribuir(0, '1');
-      result.current.atribuir(1, '1');
-    });
-    const lista = result.current.gerarListaCompras([receita, receita]);
+    await act(async () => { result.current.adicionarReceita('1', 2); });
+    const lista = result.current.gerarListaCompras([receita]);
     const frango = lista.find((i) => i.nome === 'Frango');
+    const ovo = lista.find((i) => i.nome === 'Ovo');
     expect(frango?.quantidade).toBe(1000);
+    expect(ovo?.quantidade).toBe(4);
+  });
+
+  it('migra formato antigo CardapioDia[]', async () => {
+    const antigo = [
+      { diaSemana: 0, receitaId: '1', porcoes: 4 },
+      { diaSemana: 2, receitaId: '1', porcoes: 4 },
+      { diaSemana: 1, receitaId: null },
+    ];
+    await AsyncStorage.setItem('@plano_anon', JSON.stringify(antigo));
+    const { result } = renderHook(() => useCardapio());
+    await act(async () => {});
+    expect(result.current.plano.receitas).toHaveLength(1);
+    expect(result.current.plano.receitas[0].dias).toEqual([0, 2]);
+    expect(result.current.plano.receitas[0].batches).toBe(1);
   });
 });

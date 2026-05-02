@@ -36,10 +36,17 @@ export type Profile = {
   criado_em: string;
 };
 
-export type CardapioDia = {
-  diaSemana: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  receitaId: string | null;
-  porcoes?: number;
+export type PeriodoPlanejamento = 'semanal' | 'quinzenal' | 'mensal';
+
+export type PlanoReceita = {
+  receitaId: string;
+  batches: number;
+  dias?: number[];
+};
+
+export type Plano = {
+  periodo: PeriodoPlanejamento;
+  receitas: PlanoReceita[];
 };
 
 export type ItemCompra = {
