@@ -139,35 +139,62 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
 
         <View className="gap-3">
           <AppText variant="heading" className="text-[18px]">Ingredientes</AppText>
-          {form.ingredientes.map((ing, i) => (
-            <Pressable key={i} onPress={() => editarIngrediente(i)}
-              className={`flex-row items-center gap-2 rounded-card px-3 py-2 ${editandoIngIndex === i ? 'bg-primary/10 border border-primary/30' : 'bg-surface'}`}>
-              <AppText className="flex-1">{ing.nome}</AppText>
-              <AppText variant="muted">{semQuantidade(ing.unidade) ? ing.unidade : `${ing.quantidade} ${ing.unidade}`}</AppText>
-              <Pressable onPress={() => removerIngrediente(i)}>
-                <Trash2 size={16} color="#8C7B6B" />
-              </Pressable>
-            </Pressable>
-          ))}
-          <View className="gap-2">
-            <View className="flex-row gap-2">
-              <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
-              {!semQuantidade(novoIng.unidade) && (
-                <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
-              )}
-              <Pressable
-                onPress={() => setModalUnidade(true)}
-                className="border border-border rounded-card bg-surface px-2 justify-center"
-                style={{ height: 44, minWidth: 72, maxWidth: 100 }}
-              >
-                <View className="flex-row items-center justify-between">
-                  <AppText className="text-[12px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
-                  <ChevronDown size={14} color="#8C7B6B" />
+          {form.ingredientes.map((ing, i) =>
+            editandoIngIndex === i ? (
+              <View key={i} className="bg-primary/10 border border-primary/30 rounded-card px-3 py-2 gap-2">
+                <View className="flex-row gap-2">
+                  <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
+                  {!semQuantidade(novoIng.unidade) && (
+                    <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
+                  )}
+                  <Pressable
+                    onPress={() => setModalUnidade(true)}
+                    className="border border-border rounded-card bg-surface px-2 justify-center"
+                    style={{ height: 44, minWidth: 72, maxWidth: 100 }}
+                  >
+                    <View className="flex-row items-center justify-between">
+                      <AppText className="text-[12px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
+                      <ChevronDown size={14} color="#8C7B6B" />
+                    </View>
+                  </Pressable>
                 </View>
+                <View className="flex-row gap-2">
+                  <View className="flex-1"><Button label="Salvar" onPress={adicionarIngrediente} /></View>
+                  <View className="flex-1"><Button label="Cancelar" variant="secondary" onPress={() => { setEditandoIngIndex(null); setNovoIng({ nome: '', quantidade: '', unidade: 'g' }); Keyboard.dismiss(); }} /></View>
+                </View>
+              </View>
+            ) : (
+              <Pressable key={i} onPress={() => editarIngrediente(i)}
+                className="flex-row items-center gap-2 bg-surface rounded-card px-3 py-2">
+                <AppText className="flex-1">{ing.nome}</AppText>
+                <AppText variant="muted">{semQuantidade(ing.unidade) ? ing.unidade : `${ing.quantidade} ${ing.unidade}`}</AppText>
+                <Pressable onPress={() => removerIngrediente(i)}>
+                  <Trash2 size={16} color="#8C7B6B" />
+                </Pressable>
               </Pressable>
+            )
+          )}
+          {editandoIngIndex === null && (
+            <View className="gap-2">
+              <View className="flex-row gap-2">
+                <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
+                {!semQuantidade(novoIng.unidade) && (
+                  <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
+                )}
+                <Pressable
+                  onPress={() => setModalUnidade(true)}
+                  className="border border-border rounded-card bg-surface px-2 justify-center"
+                  style={{ height: 44, minWidth: 72, maxWidth: 100 }}
+                >
+                  <View className="flex-row items-center justify-between">
+                    <AppText className="text-[12px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
+                    <ChevronDown size={14} color="#8C7B6B" />
+                  </View>
+                </Pressable>
+              </View>
+              <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
             </View>
-            <Button label={editandoIngIndex !== null ? 'Salvar alteração' : 'Adicionar ingrediente'} variant="secondary" onPress={adicionarIngrediente} />
-          </View>
+          )}
         </View>
 
         <View className="gap-3">
