@@ -38,7 +38,7 @@ export default function ComprasScreen() {
 
   if (itens.length === 0) {
     return (
-      <SafeAreaView className="flex-1 bg-background items-center justify-center gap-3 px-8">
+      <SafeAreaView className="flex-1 bg-background items-center justify-center gap-3 px-8" edges={['bottom', 'left', 'right']}>
         <AppText className="text-[48px]">🛒</AppText>
         <AppText variant="heading" className="text-center">Lista vazia</AppText>
         <AppText variant="muted" className="text-center">Adicione receitas ao cardápio semanal para gerar sua lista de compras automaticamente.</AppText>
@@ -47,7 +47,7 @@ export default function ComprasScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
       <View className="px-4 pt-4 pb-2 flex-row justify-between items-center">
         <AppText variant="title">Lista de Compras</AppText>
         {marcados.size > 0 && (

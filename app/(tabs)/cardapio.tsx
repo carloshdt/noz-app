@@ -23,7 +23,7 @@ export default function CardapioScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
       <View className="px-4 pt-4 pb-2 flex-row justify-between items-center">
         <AppText variant="title">Cardápio da Semana</AppText>
         <Pressable onPress={limpar}>

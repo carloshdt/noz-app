@@ -22,7 +22,7 @@ export default function ReceitasScreen() {
   }, [receitas, busca, categoriaAtiva]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background">
+    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
       <View className="px-4 pt-4 pb-2 gap-4">
         <AppText variant="title">O que vamos cozinhar?</AppText>
         <Input
