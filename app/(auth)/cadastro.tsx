@@ -26,6 +26,11 @@ export default function CadastroScreen() {
     try {
       setLoading(true);
       await signUp(nome.trim(), email.trim(), senha.trim());
+      Alert.alert(
+        'Verifique seu email',
+        `Enviamos um link de confirmação para ${email.trim()}. Confirme para entrar.`,
+        [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
+      );
     } catch (e: any) {
       Alert.alert('Erro', e.message ?? 'Não foi possível criar a conta. Tente novamente.');
     } finally {
