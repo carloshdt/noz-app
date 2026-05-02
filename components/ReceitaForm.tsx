@@ -37,15 +37,18 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
 
+  const semQuantidade = (u: string) => u === 'a gosto' || u === 'pitada';
+
   function adicionarIngrediente() {
-    if (!novoIng.nome || !novoIng.quantidade) return;
+    if (!novoIng.nome) return;
+    if (!semQuantidade(novoIng.unidade) && !novoIng.quantidade) return;
     const ing: Ingrediente = {
       nome: novoIng.nome,
-      quantidade: parseFloat(novoIng.quantidade),
-      unidade: novoIng.unidade || 'un',
+      quantidade: semQuantidade(novoIng.unidade) ? 0 : parseFloat(novoIng.quantidade),
+      unidade: novoIng.unidade || 'g',
     };
     setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, ing] }));
-    setNovoIng({ nome: '', quantidade: '', unidade: '' });
+    setNovoIng({ nome: '', quantidade: '', unidade: 'g' });
   }
 
   function removerIngrediente(index: number) {
@@ -112,7 +115,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           {form.ingredientes.map((ing, i) => (
             <View key={i} className="flex-row items-center gap-2 bg-surface rounded-card px-3 py-2">
               <AppText className="flex-1">{ing.nome}</AppText>
-              <AppText variant="muted">{ing.quantidade} {ing.unidade}</AppText>
+              <AppText variant="muted">{semQuantidade(ing.unidade) ? ing.unidade : `${ing.quantidade} ${ing.unidade}`}</AppText>
               <Pressable onPress={() => removerIngrediente(i)}>
                 <Trash2 size={16} color="#8C7B6B" />
               </Pressable>
@@ -121,14 +124,16 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           <View className="gap-2">
             <View className="flex-row gap-2">
               <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
-              <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
+              {!semQuantidade(novoIng.unidade) && (
+                <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
+              )}
               <Pressable
                 onPress={() => setModalUnidade(true)}
                 className="w-20 border border-border rounded-card bg-surface px-2 justify-center"
                 style={{ height: 44 }}
               >
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-[13px]" numberOfLines={1}>{novoIng.unidade || 'Un'}</AppText>
+                  <AppText className="text-[13px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
                   <ChevronDown size={14} color="#8C7B6B" />
                 </View>
               </Pressable>
