@@ -1,3 +1,17 @@
+const mockChain = {
+  select: jest.fn().mockReturnThis(),
+  eq: jest.fn().mockReturnThis(),
+  single: jest.fn().mockResolvedValue({ data: null, error: null }),
+  update: jest.fn().mockReturnThis(),
+  insert: jest.fn().mockReturnThis(),
+  upsert: jest.fn().mockReturnThis(),
+};
+
+const mockStorageChain = {
+  upload: jest.fn().mockResolvedValue({ error: null }),
+  getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://storage.example.com/avatar.jpg' } }),
+};
+
 export const supabase = {
   auth: {
     getSession: jest.fn(),
@@ -10,9 +24,10 @@ export const supabase = {
     resetPasswordForEmail: jest.fn(),
     signInWithOAuth: jest.fn(),
     setSession: jest.fn(),
+    exchangeCodeForSession: jest.fn(),
   },
-  from: jest.fn(() => ({
-    update: jest.fn().mockReturnThis(),
-    eq: jest.fn().mockResolvedValue({ error: null }),
-  })),
+  from: jest.fn(() => ({ ...mockChain })),
+  storage: {
+    from: jest.fn(() => ({ ...mockStorageChain })),
+  },
 };
