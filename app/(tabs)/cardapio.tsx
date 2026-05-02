@@ -174,9 +174,11 @@ export default function CardapioScreen() {
                   onPress={() => abrirModal(i)}
                   className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${info ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
                 >
-                  <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center shrink-0">
-                    <AppText className="font-sans-bold text-primary text-[15px]">{data.getDate()}</AppText>
-                    <AppText className="text-primary text-[11px]">{NOMES_DIA[data.getDay()]}</AppText>
+                  <View className="items-center shrink-0" style={{ width: 44 }}>
+                    <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center">
+                      <AppText className="font-sans-bold text-primary text-[15px]">{data.getDate()}</AppText>
+                    </View>
+                    <AppText className="text-primary text-[10px] mt-0.5">{NOMES_DIA[data.getDay()]}</AppText>
                   </View>
                   <View className="flex-1">
                     {info ? (
