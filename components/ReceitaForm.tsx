@@ -103,7 +103,10 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       Alert.alert('Atenção', 'Dê um nome para a receita antes de salvar.');
       return;
     }
-    onSalvar(form);
+    const dadosFinais = novaInst.trim()
+      ? { ...form, instrucoes: [...form.instrucoes, novaInst.trim()] }
+      : form;
+    onSalvar(dadosFinais);
     router.back();
   }
 

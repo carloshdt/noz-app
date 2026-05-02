@@ -1,6 +1,8 @@
 import { View, ScrollView, Image, Pressable, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Clock, Users, ChefHat } from 'lucide-react-native';
 import { useReceitas } from '../../../hooks/useReceitas';
@@ -12,8 +14,10 @@ import { InstrucaoItem } from '../../../components/InstrucaoItem';
 
 export default function ReceitaDetalhesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { receitas, remover } = useReceitas();
+  const { receitas, remover, carregarReceitas } = useReceitas();
   const receita = receitas.find((r) => r.id === id);
+
+  useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
   if (!receita) {
     return (
@@ -51,11 +55,13 @@ export default function ReceitaDetalhesScreen() {
             className="absolute bottom-0 left-0 right-0 h-32 justify-end p-4"
           >
             <AppText variant="title" className="text-white">{receita.nome}</AppText>
-            {receita.categorias.map((c) => <Badge key={c} label={c} variant="accent" />)}
           </LinearGradient>
         </View>
 
         <View className="px-4 py-6 gap-6">
+          <View className="flex-row flex-wrap gap-2">
+            {receita.categorias.map((c) => <Badge key={c} label={c} variant="accent" />)}
+          </View>
           <View className="flex-row justify-around">
             <View className="items-center gap-1">
               <Clock size={20} color="#8B4513" />
