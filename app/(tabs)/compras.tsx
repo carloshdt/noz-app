@@ -1,4 +1,5 @@
-import { View, FlatList, Pressable, SafeAreaView } from 'react-native';
+import { View, FlatList, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { Check } from 'lucide-react-native';
 import { useCardapio } from '../../hooks/useCardapio';

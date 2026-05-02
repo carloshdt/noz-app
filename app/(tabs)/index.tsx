@@ -1,4 +1,5 @@
-import { View, FlatList, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import { View, FlatList, ScrollView, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { router } from 'expo-router';
 import { Plus } from 'lucide-react-native';

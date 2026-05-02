@@ -1,4 +1,5 @@
-import { View, ScrollView, Pressable, SafeAreaView } from 'react-native';
+import { View, ScrollView, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { X, Trash2 } from 'lucide-react-native';
 import { router } from 'expo-router';

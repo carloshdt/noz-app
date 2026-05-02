@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "code-review-graph": {
+      "command": "code-review-graph",
+      "env": { "PYTHONUTF8": "1" },
+      "args": [
+        "serve"
+      ],
+      "type": "stdio"
+    }
+  }
+}

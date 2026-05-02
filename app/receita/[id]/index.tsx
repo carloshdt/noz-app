@@ -1,4 +1,5 @@
-import { View, ScrollView, Image, Pressable, SafeAreaView, Alert } from 'react-native';
+import { View, ScrollView, Image, Pressable, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Clock, Users, ChefHat } from 'lucide-react-native';
