@@ -1,8 +1,8 @@
 import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
-import { Plus, X, Minus, Check } from 'lucide-react-native';
-import { Receita, PeriodoPlanejamento } from '../../types';
+import { Plus, X, Minus } from 'lucide-react-native';
+import { Receita, PeriodoPlanejamento, DiaPorcao } from '../../types';
 import { useCardapio } from '../../hooks/useCardapio';
 import { useConfiguracao } from '../../hooks/useConfiguracao';
 import { useReceitas } from '../../hooks/useReceitas';
@@ -29,7 +29,7 @@ export default function CardapioScreen() {
   const [diaPre, setDiaPre] = useState<number | null>(null);
   const [receitaSelecionada, setReceitaSelecionada] = useState<Receita | null>(null);
   const [batches, setBatches] = useState(1);
-  const [diasSelecionados, setDiasSelecionados] = useState<number[]>([]);
+  const [diasSelecionados, setDiasSelecionados] = useState<DiaPorcao[]>([]);
   const [etapa, setEtapa] = useState<Etapa>('receitas');
 
   const totalDias = TOTAL_DIAS[periodo];
@@ -38,7 +38,7 @@ export default function CardapioScreen() {
     setDiaPre(dia ?? null);
     setReceitaSelecionada(null);
     setBatches(1);
-    setDiasSelecionados(dia !== undefined ? [dia] : []);
+    setDiasSelecionados(dia !== undefined ? [{ dia, porcoes: 1 }] : []);
     setEtapa('receitas');
     setModalAberto(true);
   }
@@ -63,10 +63,22 @@ export default function CardapioScreen() {
     }
   }
 
-  function toggleDia(i: number) {
-    setDiasSelecionados((prev) =>
-      prev.includes(i) ? prev.filter((d) => d !== i) : [...prev, i]
-    );
+  const totalPorcoesDisp = receitaSelecionada ? batches * receitaSelecionada.porcoes : 0;
+  const totalPorcoesDistrib = diasSelecionados.reduce((s, d) => s + d.porcoes, 0);
+  const porcoesRestantes = totalPorcoesDisp - totalPorcoesDistrib;
+
+  function setPorcoesNoDia(dia: number, delta: number) {
+    setDiasSelecionados((prev) => {
+      const existe = prev.find((d) => d.dia === dia);
+      if (!existe) {
+        if (delta > 0 && porcoesRestantes > 0) return [...prev, { dia, porcoes: 1 }];
+        return prev;
+      }
+      const novas = existe.porcoes + delta;
+      if (novas <= 0) return prev.filter((d) => d.dia !== dia);
+      if (delta > 0 && porcoesRestantes <= 0) return prev;
+      return prev.map((d) => d.dia === dia ? { ...d, porcoes: novas } : d);
+    });
   }
 
   function confirmarDias() {
@@ -74,10 +86,13 @@ export default function CardapioScreen() {
     fecharModal();
   }
 
-  function receitaDoDia(dia: number): Receita | undefined {
-    const pr = plano.receitas.find((r) => r.dias?.includes(dia));
+  function receitaDoDia(dia: number): { receita: Receita; porcoes: number } | undefined {
+    const pr = plano.receitas.find((r) => r.dias?.some((d) => d.dia === dia));
     if (!pr) return undefined;
-    return receitas.find((r) => r.id === pr.receitaId);
+    const receita = receitas.find((r) => r.id === pr.receitaId);
+    if (!receita) return undefined;
+    const porcoes = pr.dias?.find((d) => d.dia === dia)?.porcoes ?? 1;
+    return { receita, porcoes };
   }
 
   return (
@@ -135,7 +150,7 @@ export default function CardapioScreen() {
           <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
           <View className="flex-row flex-wrap gap-2">
             {Array.from({ length: totalDias }, (_, i) => {
-              const receita = receitaDoDia(i);
+              const info = receitaDoDia(i);
               return (
                 <Pressable
                   key={i}
@@ -144,10 +159,13 @@ export default function CardapioScreen() {
                   style={{ width: periodo === 'semanal' ? '13%' : '12%', minWidth: 44 }}
                 >
                   <AppText className="font-sans-bold text-primary text-[12px]">{rotuloDia(i, periodo)}</AppText>
-                  {receita && (
+                  {info && (
                     <AppText variant="muted" className="text-[10px] text-center mt-0.5" numberOfLines={1}>
-                      {receita.nome}
+                      {info.receita.nome}
                     </AppText>
+                  )}
+                  {info && info.porcoes > 1 && (
+                    <AppText className="text-[10px] text-primary font-sans-bold">{info.porcoes}×</AppText>
                   )}
                 </Pressable>
               );
@@ -222,22 +240,43 @@ export default function CardapioScreen() {
 
           {etapa === 'dias' && receitaSelecionada && (
             <View className="flex-1">
+              <View className="px-4 py-2 border-b border-border">
+                <AppText variant="muted" className="text-[13px] text-center">
+                  {totalPorcoesDistrib}/{totalPorcoesDisp} porções distribuídas
+                  {porcoesRestantes > 0 ? ` · restam ${porcoesRestantes}` : ' · completo'}
+                </AppText>
+              </View>
               <ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
                 {Array.from({ length: totalDias }, (_, i) => {
-                  const selecionado = diasSelecionados.includes(i);
+                  const dp = diasSelecionados.find((d) => d.dia === i);
+                  const qtd = dp?.porcoes ?? 0;
+                  const podeAumentar = porcoesRestantes > 0;
                   return (
-                    <Pressable
+                    <View
                       key={i}
-                      onPress={() => toggleDia(i)}
-                      className={`flex-row items-center gap-3 px-4 py-3 rounded-card border ${selecionado ? 'bg-primary/10 border-primary' : 'bg-surface border-border'}`}
+                      className={`flex-row items-center gap-3 px-4 py-3 rounded-card border ${qtd > 0 ? 'bg-primary/10 border-primary' : 'bg-surface border-border'}`}
                     >
-                      <View className={`w-6 h-6 rounded-full border-2 items-center justify-center ${selecionado ? 'bg-primary border-primary' : 'border-border'}`}>
-                        {selecionado && <Check size={14} color="white" />}
-                      </View>
-                      <AppText className={selecionado ? 'font-sans-bold text-primary' : ''}>
+                      <AppText className={`flex-1 ${qtd > 0 ? 'font-sans-bold text-primary' : ''}`}>
                         {rotuloDia(i, periodo)}
                       </AppText>
-                    </Pressable>
+                      <View className="flex-row items-center gap-3">
+                        <Pressable
+                          onPress={() => setPorcoesNoDia(i, -1)}
+                          disabled={qtd === 0}
+                          className={`w-8 h-8 rounded-full border items-center justify-center ${qtd === 0 ? 'border-border opacity-30' : 'border-primary bg-primary/10'}`}
+                        >
+                          <Minus size={14} color={qtd === 0 ? '#8C7B6B' : '#6B4F3A'} />
+                        </Pressable>
+                        <AppText className={`w-6 text-center font-sans-bold ${qtd > 0 ? 'text-primary' : 'text-muted'}`}>{qtd}</AppText>
+                        <Pressable
+                          onPress={() => setPorcoesNoDia(i, 1)}
+                          disabled={!podeAumentar}
+                          className={`w-8 h-8 rounded-full border items-center justify-center ${!podeAumentar ? 'border-border opacity-30' : 'border-primary bg-primary/10'}`}
+                        >
+                          <Plus size={14} color={!podeAumentar ? '#8C7B6B' : '#6B4F3A'} />
+                        </Pressable>
+                      </View>
+                    </View>
                   );
                 })}
               </ScrollView>

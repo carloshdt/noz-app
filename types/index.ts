@@ -38,10 +38,15 @@ export type Profile = {
 
 export type PeriodoPlanejamento = 'semanal' | 'quinzenal' | 'mensal';
 
+export type DiaPorcao = {
+  dia: number;
+  porcoes: number;
+};
+
 export type PlanoReceita = {
   receitaId: string;
   batches: number;
-  dias?: number[];
+  dias?: DiaPorcao[];
 };
 
 export type Plano = {

@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Plano, PlanoReceita, ItemCompra, Receita } from '../types';
+import { Plano, PlanoReceita, DiaPorcao, ItemCompra, Receita } from '../types';
 import { useAuth } from './useAuth';
 
 const planoVazio = (): Plano => ({ periodo: 'semanal', receitas: [] });
 
 function migrarFormatoAntigo(dados: any): Plano | null {
   if (!Array.isArray(dados)) return null;
-  const mapa = new Map<string, number[]>();
+  const mapa = new Map<string, DiaPorcao[]>();
   for (const d of dados) {
     if (d.receitaId) {
       const dias = mapa.get(d.receitaId) ?? [];
-      dias.push(d.diaSemana);
+      dias.push({ dia: d.diaSemana, porcoes: 1 });
       mapa.set(d.receitaId, dias);
     }
   }
@@ -45,7 +45,7 @@ export function useCardapio() {
     recarregar();
   }, [STORAGE_KEY]);
 
-  const adicionarReceita = useCallback((receitaId: string, batches: number, dias?: number[]) => {
+  const adicionarReceita = useCallback((receitaId: string, batches: number, dias?: DiaPorcao[]) => {
     setPlano((prev) => {
       const existe = prev.receitas.find((r) => r.receitaId === receitaId);
       const receitas = existe
@@ -57,7 +57,7 @@ export function useCardapio() {
     });
   }, [STORAGE_KEY]);
 
-  const atribuirDias = useCallback((receitaId: string, dias: number[]) => {
+  const atribuirDias = useCallback((receitaId: string, dias: DiaPorcao[]) => {
     setPlano((prev) => {
       const receitas = prev.receitas.map((r) =>
         r.receitaId === receitaId ? { ...r, dias } : r

@@ -44,8 +44,8 @@ describe('useCardapio', () => {
   it('adiciona receita com dias atribuídos', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
-    await act(async () => { result.current.adicionarReceita('1', 1, [0, 2]); });
-    expect(result.current.plano.receitas[0].dias).toEqual([0, 2]);
+    await act(async () => { result.current.adicionarReceita('1', 1, [{ dia: 0, porcoes: 1 }, { dia: 2, porcoes: 2 }]); });
+    expect(result.current.plano.receitas[0].dias).toEqual([{ dia: 0, porcoes: 1 }, { dia: 2, porcoes: 2 }]);
   });
 
   it('remove receita', async () => {
@@ -85,7 +85,7 @@ describe('useCardapio', () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
     expect(result.current.plano.receitas).toHaveLength(1);
-    expect(result.current.plano.receitas[0].dias).toEqual([0, 2]);
+    expect(result.current.plano.receitas[0].dias).toEqual([{ dia: 0, porcoes: 1 }, { dia: 2, porcoes: 1 }]);
     expect(result.current.plano.receitas[0].batches).toBe(1);
   });
 });
