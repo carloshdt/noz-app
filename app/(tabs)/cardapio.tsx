@@ -1,6 +1,7 @@
 import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useLayoutEffect, useMemo } from 'react';
+import { useNavigation } from 'expo-router';
 import { Plus, X, Minus } from 'lucide-react-native';
 import { Receita, PeriodoPlanejamento, DiaPorcao } from '../../types';
 import { useCardapio } from '../../hooks/useCardapio';
@@ -11,31 +12,54 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
 
-const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const NOMES_DIA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const TOTAL_DIAS: Record<PeriodoPlanejamento, number> = { semanal: 7, quinzenal: 14, mensal: 30 };
 
-function rotuloDia(i: number, periodo: PeriodoPlanejamento) {
-  return periodo === 'semanal' ? DIAS_SEMANA[i % 7] : `Dia ${i + 1}`;
+function obterDatasDoPerio(periodo: PeriodoPlanejamento, diaInicio: 'seg' | 'dom'): Date[] {
+  const hoje = new Date();
+  const dow = hoje.getDay(); // 0=Dom ... 6=Sáb
+  const offset = diaInicio === 'seg' ? (dow === 0 ? 6 : dow - 1) : dow;
+  const inicio = new Date(hoje);
+  inicio.setDate(hoje.getDate() - offset);
+  inicio.setHours(0, 0, 0, 0);
+  return Array.from({ length: TOTAL_DIAS[periodo] }, (_, i) => {
+    const d = new Date(inicio);
+    d.setDate(inicio.getDate() + i);
+    return d;
+  });
+}
+
+function rotuloDia(data: Date): string {
+  return `${data.getDate()} ${NOMES_DIA[data.getDay()]}`;
 }
 
 type Etapa = 'receitas' | 'batches' | 'dias';
 
 export default function CardapioScreen() {
+  const navigation = useNavigation();
   const { plano, adicionarReceita, removerReceita, limpar } = useCardapio();
-  const { periodo } = useConfiguracao();
+  const { periodo, diaInicio } = useConfiguracao();
   const { receitas } = useReceitas();
 
   const [modalAberto, setModalAberto] = useState(false);
-  const [diaPre, setDiaPre] = useState<number | null>(null);
   const [receitaSelecionada, setReceitaSelecionada] = useState<Receita | null>(null);
   const [batches, setBatches] = useState(1);
   const [diasSelecionados, setDiasSelecionados] = useState<DiaPorcao[]>([]);
   const [etapa, setEtapa] = useState<Etapa>('receitas');
 
-  const totalDias = TOTAL_DIAS[periodo];
+  const datas = useMemo(() => obterDatasDoPerio(periodo, diaInicio), [periodo, diaInicio]);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable onPress={limpar} style={{ paddingRight: 16 }}>
+          <AppText variant="muted" className="text-[13px]">Limpar</AppText>
+        </Pressable>
+      ),
+    });
+  }, [limpar]);
 
   function abrirModal(dia?: number) {
-    setDiaPre(dia ?? null);
     setReceitaSelecionada(null);
     setBatches(1);
     setDiasSelecionados(dia !== undefined ? [{ dia, porcoes: 1 }] : []);
@@ -45,7 +69,6 @@ export default function CardapioScreen() {
 
   function fecharModal() {
     setModalAberto(false);
-    setDiaPre(null);
     setReceitaSelecionada(null);
   }
 
@@ -98,16 +121,9 @@ export default function CardapioScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
-      <View className="px-4 pt-4 pb-2 flex-row justify-between items-center">
-        <AppText variant="title">Cardápio</AppText>
-        <Pressable onPress={limpar}>
-          <AppText variant="muted" className="text-[13px]">Limpar</AppText>
-        </Pressable>
-      </View>
-
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
         {/* Receitas do período */}
-        <View className="px-4 pb-2">
+        <View className="px-4 pt-4 pb-2">
           <View className="flex-row justify-between items-center mb-2">
             <AppText variant="heading" className="text-[14px]">Receitas do período</AppText>
             <Pressable
@@ -131,7 +147,7 @@ export default function CardapioScreen() {
                       <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
                       {pr.dias && pr.dias.length > 0 && (
                         <AppText variant="muted" className="text-[12px]">
-                          {pr.dias.map((d) => rotuloDia(d.dia, periodo)).join(', ')}
+                          {pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')}
                         </AppText>
                       )}
                     </View>
@@ -150,7 +166,7 @@ export default function CardapioScreen() {
         <View className="px-4 pt-2">
           <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
           <View className="gap-2">
-            {Array.from({ length: totalDias }, (_, i) => {
+            {datas.map((data, i) => {
               const info = receitaDoDia(i);
               return (
                 <Pressable
@@ -158,8 +174,9 @@ export default function CardapioScreen() {
                   onPress={() => abrirModal(i)}
                   className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${info ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
                 >
-                  <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center shrink-0">
-                    <AppText className="font-sans-bold text-primary text-[13px]">{rotuloDia(i, periodo)}</AppText>
+                  <View className="w-12 h-12 bg-primary/10 rounded-full items-center justify-center shrink-0">
+                    <AppText className="font-sans-bold text-primary text-[15px]">{data.getDate()}</AppText>
+                    <AppText className="text-primary text-[11px]">{NOMES_DIA[data.getDay()]}</AppText>
                   </View>
                   <View className="flex-1">
                     {info ? (
@@ -254,7 +271,7 @@ export default function CardapioScreen() {
                 </AppText>
               </View>
               <ScrollView contentContainerStyle={{ padding: 16, gap: 8 }}>
-                {Array.from({ length: totalDias }, (_, i) => {
+                {datas.map((data, i) => {
                   const dp = diasSelecionados.find((d) => d.dia === i);
                   const qtd = dp?.porcoes ?? 0;
                   const podeAumentar = porcoesRestantes > 0;
@@ -264,7 +281,7 @@ export default function CardapioScreen() {
                       className={`flex-row items-center gap-3 px-4 py-3 rounded-card border ${qtd > 0 ? 'bg-primary/10 border-primary' : 'bg-surface border-border'}`}
                     >
                       <AppText className={`flex-1 ${qtd > 0 ? 'font-sans-bold text-primary' : ''}`}>
-                        {rotuloDia(i, periodo)}
+                        {rotuloDia(data)}
                       </AppText>
                       <View className="flex-row items-center gap-3">
                         <Pressable
