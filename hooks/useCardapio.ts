@@ -1,20 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CardapioDia, ItemCompra, Receita } from '../types';
-
-const STORAGE_KEY = '@cardapio';
+import { useAuth } from './useAuth';
 
 const diasVazios = (): CardapioDia[] =>
   Array.from({ length: 7 }, (_, i) => ({ diaSemana: i as CardapioDia['diaSemana'], receitaId: null }));
 
 export function useCardapio() {
+  const { user } = useAuth();
+  const STORAGE_KEY = user ? `@cardapio_${user.id}` : '@cardapio';
   const [cardapio, setCardapio] = useState<CardapioDia[]>(diasVazios());
 
   useEffect(() => {
+    setCardapio(diasVazios());
     AsyncStorage.getItem(STORAGE_KEY).then((json) => {
       if (json) setCardapio(JSON.parse(json));
+      else setCardapio(diasVazios());
     });
-  }, []);
+  }, [STORAGE_KEY]);
 
   const salvarEAtualizar = useCallback((lista: CardapioDia[]) => {
     setCardapio(lista);
