@@ -48,7 +48,7 @@ export function useProfile() {
       const ext = fotoUri.split('.').pop()?.toLowerCase() ?? 'jpg';
       const path = `${user.id}/avatar.${ext}`;
       const base64 = await FileSystem.readAsStringAsync(fotoUri, {
-        encoding: FileSystem.EncodingType.Base64,
+        encoding: 'base64' as any,
       });
       const binaryStr = atob(base64);
       const bytes = new Uint8Array(binaryStr.length);
