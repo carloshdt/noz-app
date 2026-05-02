@@ -153,7 +153,6 @@ export default function CardapioScreen() {
                           : 'Sem dias definidos'}
                       </AppText>
                     </View>
-                    {pr.batches > 1 && <Badge label={`×${pr.batches}`} />}
                     <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
                       <X size={16} color="#8C7B6B" />
                     </Pressable>
