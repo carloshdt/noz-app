@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       options: { data: { nome } },
     });
     if (error) throw error;
-    // returns true if email confirmation is required (no session yet)
+    if (data.session) setUser(data.session.user);
     return !data.session;
   };
 
