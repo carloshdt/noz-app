@@ -15,7 +15,7 @@ const receitaBase = {
   porcoes: 4,
   dificuldade: 'Fácil' as const,
   ingredientes: [{ nome: 'Frango', quantidade: 500, unidade: 'g' }],
-  instrucoes: ['Grelhar o frango por 20 minutos'],
+  instrucoes: [{ texto: 'Grelhar o frango por 20 minutos' }],
 };
 
 describe('useReceitas', () => {

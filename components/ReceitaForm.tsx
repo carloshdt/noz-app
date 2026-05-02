@@ -1,9 +1,10 @@
-import { View, ScrollView, Pressable, Modal, FlatList, Keyboard, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
+import { View, ScrollView, Pressable, Modal, FlatList, Keyboard, KeyboardAvoidingView, Platform, TextInput, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useRef } from 'react';
-import { X, Trash2, ChevronDown } from 'lucide-react-native';
+import { X, Trash2, ChevronDown, Camera, ImagePlus } from 'lucide-react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
-import { Receita, Ingrediente, Dificuldade } from '../types';
+import { Receita, Ingrediente, Dificuldade, Instrucao } from '../types';
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { AppText } from './ui/AppText';
@@ -41,6 +42,17 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const adicionarBtnLocalY = useRef(0);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
+  const [novaInstImagem, setNovaInstImagem] = useState<string | undefined>();
+
+  async function escolherImagemReceita() {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.8 });
+    if (!result.canceled) setForm((f) => ({ ...f, imagem: result.assets[0].uri }));
+  }
+
+  async function escolherImagemPasso() {
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
+    if (!result.canceled) setNovaInstImagem(result.assets[0].uri);
+  }
 
   const semQuantidade = (u: string) => u === 'a gosto' || u === 'pitada';
 
@@ -90,8 +102,10 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
 
   function adicionarInstrucao() {
     if (!novaInst.trim()) return;
-    setForm((f) => ({ ...f, instrucoes: [...f.instrucoes, novaInst.trim()] }));
+    const nova: Instrucao = { texto: novaInst.trim(), ...(novaInstImagem ? { imagem: novaInstImagem } : {}) };
+    setForm((f) => ({ ...f, instrucoes: [...f.instrucoes, nova] }));
     setNovaInst('');
+    setNovaInstImagem(undefined);
   }
 
   function removerInstrucao(index: number) {
@@ -104,7 +118,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       return;
     }
     const dadosFinais = novaInst.trim()
-      ? { ...form, instrucoes: [...form.instrucoes, novaInst.trim()] }
+      ? { ...form, instrucoes: [...form.instrucoes, { texto: novaInst.trim(), ...(novaInstImagem ? { imagem: novaInstImagem } : {}) } as Instrucao] }
       : form;
     onSalvar(dadosFinais);
     router.back();
@@ -125,6 +139,17 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       </View>
 
       <ScrollView ref={scrollRef} className="flex-1 px-4" contentContainerStyle={{ paddingVertical: 16, gap: 20 }} keyboardShouldPersistTaps="handled">
+        <Pressable onPress={escolherImagemReceita}>
+          {form.imagem ? (
+            <Image source={{ uri: form.imagem }} className="w-full rounded-card" style={{ height: 180 }} resizeMode="cover" />
+          ) : (
+            <View className="w-full rounded-card bg-surface border border-dashed border-border items-center justify-center gap-2" style={{ height: 140 }}>
+              <Camera size={28} color="#8C7B6B" />
+              <AppText variant="muted" className="text-[13px]">Toque para adicionar foto da receita</AppText>
+            </View>
+          )}
+        </Pressable>
+
         <Input label="Nome da receita" value={form.nome} onChangeText={(v) => setForm((f) => ({ ...f, nome: v }))} placeholder="Ex: Frango ao curry" />
 
         <View className="gap-2">
@@ -229,17 +254,41 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
         <View className="gap-3">
           <AppText variant="heading" className="text-[18px]">Modo de Preparo</AppText>
           {form.instrucoes.map((inst, i) => (
-            <View key={i} className="flex-row items-start gap-2 bg-surface rounded-card px-3 py-2">
-              <AppText className="text-primary font-sans-bold w-5">{i + 1}.</AppText>
-              <AppText className="flex-1">{inst}</AppText>
-              <Pressable onPress={() => removerInstrucao(i)}>
-                <Trash2 size={16} color="#8C7B6B" />
-              </Pressable>
+            <View key={i} className="bg-surface rounded-card px-3 py-2 gap-2">
+              <View className="flex-row items-start gap-2">
+                <AppText className="text-primary font-sans-bold w-5">{i + 1}.</AppText>
+                <AppText className="flex-1">{inst.texto}</AppText>
+                <Pressable onPress={() => removerInstrucao(i)}>
+                  <Trash2 size={16} color="#8C7B6B" />
+                </Pressable>
+              </View>
+              {inst.imagem ? (
+                <Image source={{ uri: inst.imagem }} className="w-full rounded-card" style={{ height: 140 }} resizeMode="cover" />
+              ) : null}
             </View>
           ))}
           <View className="gap-2">
             <Input placeholder="Descreva o passo..." value={novaInst} onChangeText={setNovaInst} multiline />
-            <Button label="Adicionar passo" variant="secondary" onPress={adicionarInstrucao} />
+            {novaInstImagem ? (
+              <View className="relative">
+                <Image source={{ uri: novaInstImagem }} className="w-full rounded-card" style={{ height: 120 }} resizeMode="cover" />
+                <Pressable onPress={() => setNovaInstImagem(undefined)} className="absolute top-2 right-2 bg-black/50 rounded-full p-1">
+                  <X size={14} color="white" />
+                </Pressable>
+              </View>
+            ) : null}
+            <View className="flex-row gap-2">
+              <View className="flex-1">
+                <Button label="Adicionar passo" variant="secondary" onPress={adicionarInstrucao} />
+              </View>
+              <Pressable
+                onPress={escolherImagemPasso}
+                className="border border-border rounded-card bg-surface items-center justify-center"
+                style={{ width: 44, height: 44 }}
+              >
+                <ImagePlus size={18} color="#8C7B6B" />
+              </Pressable>
+            </View>
           </View>
         </View>
 

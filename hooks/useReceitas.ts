@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { Receita } from '../types';
+import { uploadImagem, isLocalUri } from '../lib/uploadImagem';
 
 const CACHE_KEY = '@receitas_v2';
 
@@ -14,6 +15,9 @@ function normalizarReceita(r: any): Receita {
   return {
     ...r,
     categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
+    instrucoes: (r.instrucoes ?? []).map((inst: any) =>
+      typeof inst === 'string' ? { texto: inst } : inst
+    ),
   };
 }
 
@@ -61,7 +65,9 @@ export function useReceitas() {
           quantidade: parseFloat(i.quantidade),
           unidade: i.unidade,
         })),
-        instrucoes: r.instrucoes ?? [],
+        instrucoes: (r.instrucoes ?? []).map((inst: any) =>
+          typeof inst === 'string' ? { texto: inst } : inst
+        ),
         publica: r.publica,
         criadaEm: r.criada_em,
         atualizadaEm: r.atualizada_em,
@@ -86,16 +92,33 @@ export function useReceitas() {
 
   const _syncReceita = async (receita: Receita, userId: string) => {
     try {
+      let imagemUrl = receita.imagem;
+      if (imagemUrl && isLocalUri(imagemUrl)) {
+        const ext = imagemUrl.split('.').pop()?.toLowerCase() ?? 'jpg';
+        imagemUrl = await uploadImagem(imagemUrl, 'receitas', `${userId}/${receita.id}.${ext}`);
+      }
+
+      const instrucoesSyncadas = await Promise.all(
+        receita.instrucoes.map(async (inst, i) => {
+          if (inst.imagem && isLocalUri(inst.imagem)) {
+            const ext = inst.imagem.split('.').pop()?.toLowerCase() ?? 'jpg';
+            const url = await uploadImagem(inst.imagem, 'receitas', `${userId}/${receita.id}_step${i}.${ext}`);
+            return { ...inst, imagem: url };
+          }
+          return inst;
+        })
+      );
+
       await supabase.from('receitas').upsert({
         id: receita.id,
         user_id: userId,
         nome: receita.nome,
         categorias: receita.categorias,
-        imagem: receita.imagem,
+        imagem: imagemUrl,
         tempo_preparo: receita.tempoPreparo,
         porcoes: receita.porcoes,
         dificuldade: receita.dificuldade,
-        instrucoes: receita.instrucoes,
+        instrucoes: instrucoesSyncadas,
         publica: receita.publica ?? false,
         atualizada_em: receita.atualizadaEm ?? new Date().toISOString(),
       });

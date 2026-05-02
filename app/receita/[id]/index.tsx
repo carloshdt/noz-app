@@ -90,7 +90,7 @@ export default function ReceitaDetalhesScreen() {
           <View className="gap-2">
             <AppText variant="heading">Modo de Preparo</AppText>
             {receita.instrucoes.map((inst, i) => (
-              <InstrucaoItem key={i} numero={i + 1} texto={inst} />
+              <InstrucaoItem key={i} numero={i + 1} instrucao={inst} />
             ))}
           </View>
 

@@ -20,7 +20,7 @@ const receita: Receita = {
     { nome: 'Frango', quantidade: 500, unidade: 'g' },
     { nome: 'Sal', quantidade: 1, unidade: 'pitada' },
   ],
-  instrucoes: ['Grelhar'],
+  instrucoes: [{ texto: 'Grelhar' }],
   criadaEm: '2026-01-01',
 };
 

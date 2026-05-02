@@ -1,5 +1,10 @@
 export type Dificuldade = 'Fácil' | 'Médio' | 'Difícil';
 
+export type Instrucao = {
+  texto: string;
+  imagem?: string;
+};
+
 export type Ingrediente = {
   id?: string;
   nome: string;
@@ -17,7 +22,7 @@ export type Receita = {
   porcoes: number;
   dificuldade: Dificuldade;
   ingredientes: Ingrediente[];
-  instrucoes: string[];
+  instrucoes: Instrucao[];
   publica?: boolean;
   criadaEm: string;
   atualizadaEm?: string;
