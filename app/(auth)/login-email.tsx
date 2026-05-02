@@ -7,6 +7,15 @@ import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+function traduzirErroAuth(msg?: string): string {
+  if (!msg) return 'Email ou senha incorretos.';
+  if (msg.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
+  if (msg.includes('Email not confirmed')) return 'Confirme seu email antes de entrar.';
+  if (msg.includes('Too many requests')) return 'Muitas tentativas. Aguarde e tente novamente.';
+  if (msg.includes('User not found')) return 'Usuário não encontrado.';
+  return msg;
+}
+
 export default function LoginEmailScreen() {
   const { signInWithEmail } = useAuth();
   const [email, setEmail] = useState('');
@@ -22,7 +31,8 @@ export default function LoginEmailScreen() {
       setLoading(true);
       await signInWithEmail(email.trim(), senha);
     } catch (e: any) {
-      Alert.alert('Erro', e.message ?? 'Email ou senha incorretos.');
+      const msg = traduzirErroAuth(e.message);
+      Alert.alert('Erro', msg);
     } finally {
       setLoading(false);
     }
