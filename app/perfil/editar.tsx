@@ -1,6 +1,6 @@
 import { View, Pressable, Alert, Image, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import * as ImagePicker from 'expo-image-picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useProfile } from '../../hooks/useProfile';
@@ -12,6 +12,10 @@ export default function EditarPerfil() {
   const { profile, updateProfile } = useProfile();
   const { user } = useAuth();
   const [nome, setNome] = useState(profile?.nome ?? '');
+
+  useEffect(() => {
+    if (profile?.nome && !nome) setNome(profile.nome);
+  }, [profile?.nome]);
   const [fotoUri, setFotoUri] = useState<string | undefined>(undefined);
   const [salvando, setSalvando] = useState(false);
 
