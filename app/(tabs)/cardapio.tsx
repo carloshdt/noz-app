@@ -69,14 +69,15 @@ export default function CardapioScreen() {
 
   function setPorcoesNoDia(dia: number, delta: number) {
     setDiasSelecionados((prev) => {
+      const restantes = totalPorcoesDisp - prev.reduce((s, d) => s + d.porcoes, 0);
       const existe = prev.find((d) => d.dia === dia);
       if (!existe) {
-        if (delta > 0 && porcoesRestantes > 0) return [...prev, { dia, porcoes: 1 }];
+        if (delta > 0 && restantes > 0) return [...prev, { dia, porcoes: 1 }];
         return prev;
       }
       const novas = existe.porcoes + delta;
       if (novas <= 0) return prev.filter((d) => d.dia !== dia);
-      if (delta > 0 && porcoesRestantes <= 0) return prev;
+      if (delta > 0 && restantes <= 0) return prev;
       return prev.map((d) => d.dia === dia ? { ...d, porcoes: novas } : d);
     });
   }
@@ -130,7 +131,7 @@ export default function CardapioScreen() {
                       <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
                       {pr.dias && pr.dias.length > 0 && (
                         <AppText variant="muted" className="text-[12px]">
-                          {pr.dias.map((d) => rotuloDia(d, periodo)).join(', ')}
+                          {pr.dias.map((d) => rotuloDia(d.dia, periodo)).join(', ')}
                         </AppText>
                       )}
                     </View>
@@ -145,28 +146,34 @@ export default function CardapioScreen() {
           )}
         </View>
 
-        {/* Grade de dias */}
+        {/* Lista de dias */}
         <View className="px-4 pt-2">
           <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="gap-2">
             {Array.from({ length: totalDias }, (_, i) => {
               const info = receitaDoDia(i);
               return (
                 <Pressable
                   key={i}
                   onPress={() => abrirModal(i)}
-                  className="rounded-card border border-border bg-surface items-center justify-center p-2"
-                  style={{ width: periodo === 'semanal' ? '13%' : '12%', minWidth: 44 }}
+                  className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${info ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
                 >
-                  <AppText className="font-sans-bold text-primary text-[12px]">{rotuloDia(i, periodo)}</AppText>
-                  {info && (
-                    <AppText variant="muted" className="text-[10px] text-center mt-0.5" numberOfLines={1}>
-                      {info.receita.nome}
-                    </AppText>
-                  )}
-                  {info && info.porcoes > 1 && (
-                    <AppText className="text-[10px] text-primary font-sans-bold">{info.porcoes}×</AppText>
-                  )}
+                  <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center shrink-0">
+                    <AppText className="font-sans-bold text-primary text-[13px]">{rotuloDia(i, periodo)}</AppText>
+                  </View>
+                  <View className="flex-1">
+                    {info ? (
+                      <>
+                        <AppText variant="heading" className="text-[14px]">{info.receita.nome}</AppText>
+                        <AppText variant="muted" className="text-[12px]">
+                          {info.porcoes} porção{info.porcoes > 1 ? 's' : ''}
+                        </AppText>
+                      </>
+                    ) : (
+                      <AppText variant="muted" className="text-[13px]">Sem receita</AppText>
+                    )}
+                  </View>
+                  <Plus size={16} color="#8C7B6B" />
                 </Pressable>
               );
             })}
