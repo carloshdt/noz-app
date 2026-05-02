@@ -26,7 +26,29 @@ export type Receita = {
   publica?: boolean;
   criadaEm: string;
   atualizadaEm?: string;
+  fonte_receita_id?: string;
+  fonte_atualizada_em?: string;
   _pendingSync?: boolean;
+};
+
+export type Criador = {
+  id: string;
+  nome: string;
+  foto_url?: string;
+  total_importacoes: number;
+};
+
+export type ReceitaFeed = {
+  id: string;
+  user_id: string;
+  nome: string;
+  categorias: string[];
+  imagem?: string;
+  tempoPreparo: number;
+  porcoes: number;
+  dificuldade: Dificuldade;
+  criadaEm: string;
+  criador: Criador;
 };
 
 export type Profile = {
@@ -34,6 +56,7 @@ export type Profile = {
   nome: string;
   foto_url?: string;
   criado_em: string;
+  total_importacoes?: number;
 };
 
 export type PeriodoPlanejamento = 'semanal' | 'quinzenal' | 'mensal';
