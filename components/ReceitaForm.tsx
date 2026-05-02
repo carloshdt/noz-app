@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
+import { View, ScrollView, Pressable, Modal, FlatList, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { X, Trash2, ChevronDown } from 'lucide-react-native';
@@ -59,6 +59,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, ing] }));
     }
     setNovoIng({ nome: '', quantidade: '', unidade: 'g' });
+    Keyboard.dismiss();
   }
 
   function editarIngrediente(index: number) {
