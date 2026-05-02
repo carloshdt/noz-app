@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { supabase } from './supabase';
 
 export async function uploadImagem(
@@ -6,15 +7,19 @@ export async function uploadImagem(
   bucket: string,
   path: string
 ): Promise<string> {
-  const ext = localUri.split('.').pop()?.toLowerCase() ?? 'jpg';
-  const contentType = `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-  const base64 = await FileSystem.readAsStringAsync(localUri, { encoding: 'base64' as any });
+  const { uri: jpegUri } = await ImageManipulator.manipulateAsync(
+    localUri,
+    [],
+    { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+  );
+
+  const base64 = await FileSystem.readAsStringAsync(jpegUri, { encoding: 'base64' as any });
   const binaryStr = atob(base64);
   const bytes = new Uint8Array(binaryStr.length);
   for (let i = 0; i < binaryStr.length; i++) {
     bytes[i] = binaryStr.charCodeAt(i);
   }
-  const { error } = await supabase.storage.from(bucket).upload(path, bytes, { upsert: true, contentType });
+  const { error } = await supabase.storage.from(bucket).upload(path, bytes, { upsert: true, contentType: 'image/jpeg' });
   if (error) throw error;
   const { data: { publicUrl } } = supabase.storage.from(bucket).getPublicUrl(path);
   return publicUrl;

@@ -26,9 +26,9 @@ export default function EditarPerfil() {
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled) {
-      setFotoUri(result.assets[0].uri);
-    }
+    if (result.canceled) return;
+    if ((result.assets[0].fileSize ?? 0) > 3 * 1024 * 1024) { Alert.alert('Imagem muito grande', 'Escolha uma imagem de até 3 MB.'); return; }
+    setFotoUri(result.assets[0].uri);
   };
 
   const handleSalvar = async () => {

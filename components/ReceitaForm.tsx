@@ -46,12 +46,16 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
 
   async function escolherImagemReceita() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, aspect: [4, 3], quality: 0.8 });
-    if (!result.canceled) setForm((f) => ({ ...f, imagem: result.assets[0].uri }));
+    if (result.canceled) return;
+    if ((result.assets[0].fileSize ?? 0) > 3 * 1024 * 1024) { Alert.alert('Imagem muito grande', 'Escolha uma imagem de até 3 MB.'); return; }
+    setForm((f) => ({ ...f, imagem: result.assets[0].uri }));
   }
 
   async function escolherImagemPasso() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
-    if (!result.canceled) setNovaInstImagem(result.assets[0].uri);
+    if (result.canceled) return;
+    if ((result.assets[0].fileSize ?? 0) > 3 * 1024 * 1024) { Alert.alert('Imagem muito grande', 'Escolha uma imagem de até 3 MB.'); return; }
+    setNovaInstImagem(result.assets[0].uri);
   }
 
   const semQuantidade = (u: string) => u === 'a gosto' || u === 'pitada';
@@ -263,7 +267,23 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
                 </Pressable>
               </View>
               {inst.imagem ? (
-                <Image source={{ uri: inst.imagem }} className="w-full rounded-card" style={{ height: 140 }} resizeMode="cover" />
+                <Pressable onPress={async () => {
+                  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.8 });
+                  if (result.canceled) return;
+                  if ((result.assets[0].fileSize ?? 0) > 3 * 1024 * 1024) { Alert.alert('Imagem muito grande', 'Escolha uma imagem de até 3 MB.'); return; }
+                  setForm((f) => {
+                    const lista = [...f.instrucoes];
+                    lista[i] = { ...lista[i], imagem: result.assets[0].uri };
+                    return { ...f, instrucoes: lista };
+                  });
+                }}>
+                  <View>
+                    <Image source={{ uri: inst.imagem }} className="w-full rounded-card" style={{ height: 140 }} resizeMode="cover" />
+                    <View className="absolute bottom-2 right-2 bg-black/50 rounded-full p-1">
+                      <Camera size={14} color="white" />
+                    </View>
+                  </View>
+                </Pressable>
               ) : null}
             </View>
           ))}

@@ -94,15 +94,13 @@ export function useReceitas() {
     try {
       let imagemUrl = receita.imagem;
       if (imagemUrl && isLocalUri(imagemUrl)) {
-        const ext = imagemUrl.split('.').pop()?.toLowerCase() ?? 'jpg';
-        imagemUrl = await uploadImagem(imagemUrl, 'receitas', `${userId}/${receita.id}.${ext}`);
+        imagemUrl = await uploadImagem(imagemUrl, 'receitas', `${userId}/${receita.id}.jpg`);
       }
 
       const instrucoesSyncadas = await Promise.all(
         receita.instrucoes.map(async (inst, i) => {
           if (inst.imagem && isLocalUri(inst.imagem)) {
-            const ext = inst.imagem.split('.').pop()?.toLowerCase() ?? 'jpg';
-            const url = await uploadImagem(inst.imagem, 'receitas', `${userId}/${receita.id}_step${i}.${ext}`);
+            const url = await uploadImagem(inst.imagem, 'receitas', `${userId}/${receita.id}_step${i}.jpg`);
             return { ...inst, imagem: url };
           }
           return inst;
