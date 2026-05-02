@@ -23,7 +23,10 @@ export default function EsqueciSenhaScreen() {
       await resetPassword(email.trim());
       setEnviado(true);
     } catch (e: any) {
-      Alert.alert('Erro', e.message ?? 'Não foi possível enviar o email.');
+      const msg = e.message?.includes('sending') || e.message?.includes('recovery')
+        ? 'Não foi possível enviar o email. Verifique o endereço e tente novamente.'
+        : (e.message ?? 'Não foi possível enviar o email.');
+      Alert.alert('Erro', msg);
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import React from 'react';
 jest.mock('../../lib/supabase');
 jest.mock('expo-web-browser', () => ({ maybeCompleteAuthSession: jest.fn(), openAuthSessionAsync: jest.fn() }));
 jest.mock('expo-auth-session', () => ({ makeRedirectUri: jest.fn(() => 'noz://') }));
+jest.mock('expo-linking', () => ({ createURL: jest.fn((path: string) => `noz://${path}`) }));
 
 const wrapper = ({ children }: { children: React.ReactNode }) =>
   React.createElement(AuthProvider, null, children);
@@ -54,6 +55,9 @@ describe('useAuth', () => {
     await act(async () => {
       await result.current.resetPassword('test@test.com');
     });
-    expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('test@test.com');
+    expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      'test@test.com',
+      { redirectTo: 'noz://nova-senha' }
+    );
   });
 });
