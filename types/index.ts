@@ -45,5 +45,5 @@ export type ItemCompra = {
   nome: string;
   quantidade: number;
   unidade: string;
-  categoria: string;
+  receitas: string[];
 };

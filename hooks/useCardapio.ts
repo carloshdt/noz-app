@@ -56,9 +56,11 @@ export function useCardapio() {
         receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
           const chave = `${nome.toLowerCase()}|${unidade}`;
           if (mapa.has(chave)) {
-            mapa.get(chave)!.quantidade += quantidade;
+            const item = mapa.get(chave)!;
+            item.quantidade += quantidade;
+            if (!item.receitas.includes(receita.nome)) item.receitas.push(receita.nome);
           } else {
-            mapa.set(chave, { nome, quantidade, unidade, categoria: receita.categorias[0] });
+            mapa.set(chave, { nome, quantidade, unidade, receitas: [receita.nome] });
           }
         });
       });
