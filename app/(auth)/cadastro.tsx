@@ -32,6 +32,8 @@ export default function CadastroScreen() {
           `Enviamos um link de confirmação para ${email.trim()}. Confirme para entrar.`,
           [{ text: 'OK', onPress: () => router.replace('/(auth)/login') }]
         );
+      } else {
+        router.replace('/(tabs)');
       }
     } catch (e: any) {
       Alert.alert('Erro', e.message ?? 'Não foi possível criar a conta. Tente novamente.');
