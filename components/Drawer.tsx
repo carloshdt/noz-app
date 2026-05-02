@@ -87,7 +87,7 @@ export function Drawer({ visible, onClose, user, profile }: Props) {
           <AppText style={styles.textMuted}>❓ Ajuda</AppText>
         </Pressable>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { paddingBottom: insets.bottom }]}>
           <Pressable style={styles.menuItem} onPress={handleSignOut}>
             <AppText style={styles.textLogout}>⬅ Sair</AppText>
           </Pressable>
