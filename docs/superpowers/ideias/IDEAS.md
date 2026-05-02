@@ -1,6 +1,6 @@
-# Ideas & Funcionalidades Futuras
+# Ideas & Funcionalidades Futuras — Noz
 
-Lista centralizada de ideias para o app de receitas. Não comprometidas com nenhuma sprint — só um lugar para não perder nada.
+Lista centralizada de ideias. Não comprometidas com nenhuma sprint — só um lugar para não perder nada.
 
 ---
 
@@ -13,13 +13,32 @@ Tela cheia passo a passo enquanto o usuário cozinha. Inclui:
 - Tela que não apaga (wake lock) enquanto o modo estiver ativo
 - Indicador de progresso visual
 
+### Conta Oficial "Noz"
+- Conta oficial do app para popular o feed no início, antes de ter usuários reais
+- Publica receitas curadas/selecionadas para novos usuários não verem o feed vazio
+- Funciona como "seed content" — dá vida ao app desde o primeiro dia
+- Pode evoluir para um perfil editorial com receitas da estação, tendências, etc.
+
+### Feed Social de Receitas
+- Feed estilo scroll infinito onde usuários descobrem receitas de outros usuários
+- Botão para adicionar a receita ao próprio acervo pessoal
+- Botão para adicionar direto ao cardápio da semana
+- Sistema de ranking para criadores: contagem de quantas vezes a receita foi adicionada por outros usuários
+- Ranking de criadores mais populares
+
+### Engajamento Social
+- **Likes** nas receitas de outros usuários
+- **Comentários** nas receitas — dicas, variações, avaliações
+- Contagem de likes e comentários visível no feed e na receita
+- Notificações quando alguém curtir ou comentar sua receita
+
 ---
 
 ## Stack & Arquitetura
 
 - Expo + NativeWind (Tailwind para React Native)
 - App nativo iOS e Android, com versão web embutida pelo Expo
-- Camada de dados em hooks isolados (hoje: JSON local → futuro: API/Supabase sem tocar nos componentes)
+- Camada de dados em hooks isolados (hoje: AsyncStorage + Supabase → sem tocar nos componentes ao evoluir)
 
 ---
 
@@ -34,8 +53,7 @@ Tela cheia passo a passo enquanto o usuário cozinha. Inclui:
 
 ## Nome do App
 
-Candidatos em consideração:
-- **Noz** — pequeno, forte, sofisticado
+**Noz** — pequeno, forte, sofisticado
 
 ---
 
