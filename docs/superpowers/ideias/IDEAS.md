@@ -6,6 +6,17 @@ Lista centralizada de ideias. Não comprometidas com nenhuma sprint — só um l
 
 ## Features
 
+### Internacionalização (i18n)
+Suporte a múltiplos idiomas com detecção automática pelo locale do dispositivo:
+- PT-BR (padrão)
+- PT-PT
+- EN-US
+- FR
+- Mais idiomas a definir
+
+---
+
+
 ### Modo "Cozinhando Agora"
 Tela cheia passo a passo enquanto o usuário cozinha. Inclui:
 - Navegação entre passos com swipe ou botões grandes (fácil com as mãos sujas)
