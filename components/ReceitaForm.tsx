@@ -116,10 +116,10 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
 
         <View className="flex-row gap-3">
           <View className="flex-1">
-            <Input label="Tempo (min)" value={String(form.tempoPreparo)} onChangeText={(v) => setForm((f) => ({ ...f, tempoPreparo: parseInt(v) || 0 }))} keyboardType="numeric" />
+            <Input label="Tempo (min)" value={form.tempoPreparo === 0 ? '' : String(form.tempoPreparo)} onChangeText={(v) => setForm((f) => ({ ...f, tempoPreparo: parseInt(v) || 0 }))} keyboardType="numeric" placeholder="0" />
           </View>
           <View className="flex-1">
-            <Input label="Porções" value={String(form.porcoes)} onChangeText={(v) => setForm((f) => ({ ...f, porcoes: parseInt(v) || 1 }))} keyboardType="numeric" />
+            <Input label="Porções" value={form.porcoes === 0 ? '' : String(form.porcoes)} onChangeText={(v) => setForm((f) => ({ ...f, porcoes: parseInt(v) || 0 }))} keyboardType="numeric" placeholder="0" />
           </View>
         </View>
 
