@@ -29,10 +29,10 @@ export function useCardapio() {
   }, []);
 
   const atribuir = useCallback(
-    (diaSemana: number, receitaId: string | null) => {
+    (diaSemana: number, receitaId: string | null, porcoes?: number) => {
       setCardapio((prev) => {
         const lista = prev.map((d) =>
-          d.diaSemana === diaSemana ? { ...d, receitaId } : d
+          d.diaSemana === diaSemana ? { ...d, receitaId, porcoes } : d
         );
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(lista));
         return lista;
@@ -49,18 +49,20 @@ export function useCardapio() {
   const gerarListaCompras = useCallback(
     (todasReceitas: Receita[]): ItemCompra[] => {
       const mapa = new Map<string, ItemCompra>();
-      cardapio.forEach(({ receitaId }) => {
+      cardapio.forEach(({ receitaId, porcoes }) => {
         if (!receitaId) return;
         const receita = todasReceitas.find((r) => r.id === receitaId);
         if (!receita) return;
+        const fator = receita.porcoes > 0 ? (porcoes ?? receita.porcoes) / receita.porcoes : 1;
         receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
+          const qtdEscalada = quantidade * fator;
           const chave = `${nome.toLowerCase()}|${unidade}`;
           if (mapa.has(chave)) {
             const item = mapa.get(chave)!;
-            item.quantidade += quantidade;
+            item.quantidade += qtdEscalada;
             if (!item.receitas.includes(receita.nome)) item.receitas.push(receita.nome);
           } else {
-            mapa.set(chave, { nome, quantidade, unidade, receitas: [receita.nome] });
+            mapa.set(chave, { nome, quantidade: qtdEscalada, unidade, receitas: [receita.nome] });
           }
         });
       });

@@ -39,6 +39,7 @@ export type Profile = {
 export type CardapioDia = {
   diaSemana: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   receitaId: string | null;
+  porcoes?: number;
 };
 
 export type ItemCompra = {
