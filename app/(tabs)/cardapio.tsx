@@ -45,7 +45,7 @@ export default function CardapioScreen() {
                     <>
                       <AppText variant="heading" className="text-[15px]">{receita.nome}</AppText>
                       <View className="flex-row gap-2 mt-1">
-                        <Badge label={receita.categoria} />
+                        <Badge label={receita.categorias[0]} />
                         <Badge label={`${receita.tempoPreparo} min`} />
                       </View>
                     </>
@@ -98,7 +98,7 @@ export default function CardapioScreen() {
                     <AppText variant="heading" className="text-[15px]">{item.nome}</AppText>
                     <AppText variant="muted" className="text-[13px]">{item.tempoPreparo} min · {item.porcoes} porções</AppText>
                   </View>
-                  <Badge label={item.categoria} />
+                  <Badge label={item.categorias[0]} />
                 </Card>
               </Pressable>
             )}

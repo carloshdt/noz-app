@@ -42,7 +42,7 @@ export function useReceitas() {
         id: r.id,
         user_id: r.user_id,
         nome: r.nome,
-        categoria: r.categoria,
+        categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
         imagem: r.imagem,
         tempoPreparo: r.tempo_preparo,
         porcoes: r.porcoes,
@@ -82,7 +82,7 @@ export function useReceitas() {
         id: receita.id,
         user_id: userId,
         nome: receita.nome,
-        categoria: receita.categoria,
+        categorias: receita.categorias,
         imagem: receita.imagem,
         tempo_preparo: receita.tempoPreparo,
         porcoes: receita.porcoes,
@@ -169,11 +169,11 @@ export function useReceitas() {
     (termo: string): Receita[] => {
       const t = termo.toLowerCase();
       return receitas.filter(
-        (r) => r.nome.toLowerCase().includes(t) || r.categoria.toLowerCase().includes(t)
+        (r) => r.nome.toLowerCase().includes(t) || r.categorias.join(' ').toLowerCase().includes(t)
       );
     },
     [receitas]
   );
 
-  return { receitas, adicionar, remover, editar, buscar };
+  return { receitas, adicionar, remover, editar, buscar, carregarReceitas };
 }

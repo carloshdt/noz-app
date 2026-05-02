@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "code-review-graph": {
-      "command": "code-review-graph",
+      "command": "C:\\Users\\carlo\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\code-review-graph.exe",
       "env": { "PYTHONUTF8": "1" },
       "args": [
         "serve"

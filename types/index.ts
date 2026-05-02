@@ -11,7 +11,7 @@ export type Receita = {
   id: string;
   user_id?: string;
   nome: string;
-  categoria: string;
+  categorias: string[];
   imagem?: string;
   tempoPreparo: number;
   porcoes: number;

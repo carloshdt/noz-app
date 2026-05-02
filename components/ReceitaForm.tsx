@@ -1,6 +1,6 @@
-import { View, ScrollView, Pressable, Modal, FlatList, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, ScrollView, Pressable, Modal, FlatList, Keyboard, KeyboardAvoidingView, Platform, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Trash2, ChevronDown } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Receita, Ingrediente, Dificuldade } from '../types';
@@ -8,7 +8,7 @@ import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { AppText } from './ui/AppText';
 import { CATEGORIAS } from '../constants/categorias';
-import { UNIDADES } from '../constants/unidades';
+import { UNIDADES, UNIDADES_NOMES } from '../constants/unidades';
 import { CategoriaChip } from './CategoriaChip';
 
 type FormData = Omit<Receita, 'id' | 'criadaEm'>;
@@ -23,7 +23,7 @@ const DIFICULDADES: Dificuldade[] = ['Fácil', 'Médio', 'Difícil'];
 
 const formVazio = (): FormData => ({
   nome: '',
-  categoria: 'Carnes',
+  categorias: ['Carnes'],
   tempoPreparo: 30,
   porcoes: 4,
   dificuldade: 'Fácil',
@@ -35,6 +35,9 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const [form, setForm] = useState<FormData>(inicial ?? formVazio());
   const [novoIng, setNovoIng] = useState({ nome: '', quantidade: '', unidade: 'g' });
   const [editandoIngIndex, setEditandoIngIndex] = useState<number | null>(null);
+  const nomeIngRef = useRef<TextInput>(null);
+  const scrollRef = useRef<ScrollView>(null);
+  const adicionarBtnRef = useRef<View>(null);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
 
@@ -59,7 +62,20 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, ing] }));
     }
     setNovoIng({ nome: '', quantidade: '', unidade: 'g' });
-    Keyboard.dismiss();
+    if (editandoIngIndex !== null) {
+      Keyboard.dismiss();
+    } else {
+      setTimeout(() => {
+        nomeIngRef.current?.focus();
+        adicionarBtnRef.current?.measureLayout(
+          (scrollRef.current as any)?.getInnerViewNode(),
+          (_x: number, y: number) => {
+            scrollRef.current?.scrollTo({ y: y - 80, animated: true });
+          },
+          () => {}
+        );
+      }, 100);
+    }
   }
 
   function editarIngrediente(index: number) {
@@ -88,7 +104,10 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   }
 
   function salvar() {
-    if (!form.nome.trim()) return;
+    if (!form.nome.trim()) {
+      Alert.alert('Atenção', 'Dê um nome para a receita antes de salvar.');
+      return;
+    }
     onSalvar(form);
     router.back();
   }
@@ -107,14 +126,24 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
         </Pressable>
       </View>
 
-      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingVertical: 16, gap: 20 }}>
+      <ScrollView ref={scrollRef} className="flex-1 px-4" contentContainerStyle={{ paddingVertical: 16, gap: 20 }} keyboardShouldPersistTaps="handled">
         <Input label="Nome da receita" value={form.nome} onChangeText={(v) => setForm((f) => ({ ...f, nome: v }))} placeholder="Ex: Frango ao curry" />
 
         <View className="gap-2">
           <AppText variant="label">Categoria</AppText>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {CATEGORIAS.filter((c) => c !== 'Todas').map((cat) => (
-              <CategoriaChip key={cat} label={cat} ativo={form.categoria === cat} onPress={() => setForm((f) => ({ ...f, categoria: cat }))} />
+              <CategoriaChip
+                key={cat}
+                label={cat}
+                ativo={form.categorias.includes(cat)}
+                onPress={() => setForm((f) => {
+                  const lista = f.categorias.includes(cat)
+                    ? f.categorias.filter((c) => c !== cat)
+                    : [...f.categorias, cat];
+                  return { ...f, categorias: lista.length > 0 ? lista : [cat] };
+                })}
+              />
             ))}
           </ScrollView>
         </View>
@@ -177,7 +206,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           {editandoIngIndex === null && (
             <View className="gap-2">
               <View className="flex-row gap-2">
-                <View className="flex-1"><Input placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
+                <View className="flex-1"><Input ref={nomeIngRef} placeholder="Nome" value={novoIng.nome} onChangeText={(v) => setNovoIng((n) => ({ ...n, nome: v }))} /></View>
                 {!semQuantidade(novoIng.unidade) && (
                   <View className="w-20"><Input placeholder="Qtd" value={novoIng.quantidade} onChangeText={(v) => setNovoIng((n) => ({ ...n, quantidade: v }))} keyboardType="numeric" /></View>
                 )}
@@ -192,7 +221,9 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
                   </View>
                 </Pressable>
               </View>
-              <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
+              <View ref={adicionarBtnRef}>
+                <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
+              </View>
             </View>
           )}
         </View>
@@ -236,7 +267,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
                 onPress={() => { setNovoIng((n) => ({ ...n, unidade: item })); setModalUnidade(false); }}
                 className={`px-4 py-4 rounded-card mb-1 ${novoIng.unidade === item ? 'bg-primary/10' : ''}`}
               >
-                <AppText className={novoIng.unidade === item ? 'text-primary font-sans-bold' : ''}>{item}</AppText>
+                <AppText className={novoIng.unidade === item ? 'text-primary font-sans-bold' : ''}>{UNIDADES_NOMES[item] ?? item}</AppText>
               </Pressable>
             )}
           />

@@ -12,7 +12,7 @@ jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }));
 const receita: Receita = {
   id: '1',
   nome: 'Frango',
-  categoria: 'Carnes',
+  categorias: ['Carnes'],
   tempoPreparo: 20,
   porcoes: 4,
   dificuldade: 'Fácil',

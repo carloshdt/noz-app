@@ -10,7 +10,7 @@ jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }));
 
 const receitaBase = {
   nome: 'Frango Grelhado',
-  categoria: 'Carnes',
+  categorias: ['Carnes'],
   tempoPreparo: 20,
   porcoes: 4,
   dificuldade: 'Fácil' as const,
@@ -60,7 +60,7 @@ describe('useReceitas', () => {
     await act(async () => {});
     await act(async () => {
       result.current.adicionar(receitaBase);
-      result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categoria: 'Massas' });
+      result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categorias: ['Massas'] });
     });
     const encontradas = result.current.buscar('frango');
     expect(encontradas).toHaveLength(1);

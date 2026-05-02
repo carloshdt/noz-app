@@ -2,6 +2,8 @@ import { View, FlatList, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { router } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useCallback } from 'react';
 import { Plus } from 'lucide-react-native';
 import { useReceitas } from '../../hooks/useReceitas';
 import { ReceitaCard } from '../../components/ReceitaCard';
@@ -11,14 +13,16 @@ import { AppText } from '../../components/ui/AppText';
 import { CATEGORIAS } from '../../constants/categorias';
 
 export default function ReceitasScreen() {
-  const { receitas, buscar } = useReceitas();
+  const { receitas, buscar, carregarReceitas } = useReceitas();
   const [busca, setBusca] = useState('');
   const [categoriaAtiva, setCategoriaAtiva] = useState('Todas');
+
+  useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
   const receitasFiltradas = useMemo(() => {
     const base = busca.trim() ? buscar(busca) : receitas;
     if (categoriaAtiva === 'Todas') return base;
-    return base.filter((r) => r.categoria === categoriaAtiva);
+    return base.filter((r) => r.categorias.includes(categoriaAtiva));
   }, [receitas, busca, categoriaAtiva]);
 
   return (

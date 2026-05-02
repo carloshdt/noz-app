@@ -51,7 +51,7 @@ export default function ReceitaDetalhesScreen() {
             className="absolute bottom-0 left-0 right-0 h-32 justify-end p-4"
           >
             <AppText variant="title" className="text-white">{receita.nome}</AppText>
-            <Badge label={receita.categoria} variant="accent" />
+            {receita.categorias.map((c) => <Badge key={c} label={c} variant="accent" />)}
           </LinearGradient>
         </View>
 

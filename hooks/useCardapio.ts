@@ -54,7 +54,7 @@ export function useCardapio() {
           if (mapa.has(chave)) {
             mapa.get(chave)!.quantidade += quantidade;
           } else {
-            mapa.set(chave, { nome, quantidade, unidade, categoria: receita.categoria });
+            mapa.set(chave, { nome, quantidade, unidade, categoria: receita.categorias[0] });
           }
         });
       });
