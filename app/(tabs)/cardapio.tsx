@@ -145,11 +145,11 @@ export default function CardapioScreen() {
                   <Card key={pr.receitaId} className="flex-row items-center gap-3">
                     <View className="flex-1">
                       <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
-                      {pr.dias && pr.dias.length > 0 && (
-                        <AppText variant="muted" className="text-[12px]">
-                          {pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')}
-                        </AppText>
-                      )}
+                      <AppText variant="muted" className="text-[12px]">
+                        {pr.dias && pr.dias.length > 0
+                          ? pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')
+                          : 'Sem dias definidos'}
+                      </AppText>
                     </View>
                     {pr.batches > 1 && <Badge label={`×${pr.batches}`} />}
                     <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
