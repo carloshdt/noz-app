@@ -3,7 +3,7 @@ import { useProfile } from '../../hooks/useProfile';
 import { supabase } from '../../lib/supabase';
 
 jest.mock('../../lib/supabase');
-jest.mock('expo-file-system', () => ({
+jest.mock('expo-file-system/legacy', () => ({
   readAsStringAsync: jest.fn().mockResolvedValue('base64data'),
 }));
 jest.mock('../../hooks/useAuth', () => ({

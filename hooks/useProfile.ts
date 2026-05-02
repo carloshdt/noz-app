@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { User } from '@supabase/supabase-js';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from '../lib/supabase';
 import { Profile } from '../types';
 import { useAuth } from './useAuth';
