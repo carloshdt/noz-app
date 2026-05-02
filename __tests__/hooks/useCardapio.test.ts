@@ -6,6 +6,8 @@ import { Receita } from '../../types';
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+jest.mock('../../lib/supabase');
+jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }));
 
 const receita: Receita = {
   id: '1',
