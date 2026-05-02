@@ -4,6 +4,16 @@ Lista centralizada de ideias. Não comprometidas com nenhuma sprint — só um l
 
 ---
 
+## Ajustes Pendentes
+
+### Configurar domínio de email próprio (Resend)
+Resend free tier com `onboarding@resend.dev` só envia para o email da conta Resend. Para enviar reset de senha e confirmações para qualquer usuário, precisamos:
+- Configurar domínio próprio no Resend (ex: `noz@seudominio.com`)
+- Atualizar "Sender email address" no Supabase → Authentication → SMTP Settings
+- Testar fluxo completo de reset de senha e confirmação de email
+
+---
+
 ## Features
 
 ### Internacionalização (i18n)
