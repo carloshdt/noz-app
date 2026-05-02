@@ -6,6 +6,7 @@ import { AppText } from '../../components/ui/AppText';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { traduzirErroAuth } from '../../utils/authErrors';
 
 export default function EsqueciSenhaScreen() {
   const { resetPassword } = useAuth();
@@ -23,10 +24,7 @@ export default function EsqueciSenhaScreen() {
       await resetPassword(email.trim());
       setEnviado(true);
     } catch (e: any) {
-      const msg = e.message?.includes('sending') || e.message?.includes('recovery')
-        ? 'Não foi possível enviar o email. Verifique o endereço e tente novamente.'
-        : (e.message ?? 'Não foi possível enviar o email.');
-      Alert.alert('Erro', msg);
+      Alert.alert('Erro', traduzirErroAuth(e.message));
     } finally {
       setLoading(false);
     }

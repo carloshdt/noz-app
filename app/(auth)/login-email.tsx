@@ -6,15 +6,7 @@ import { AppText } from '../../components/ui/AppText';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-function traduzirErroAuth(msg?: string): string {
-  if (!msg) return 'Email ou senha incorretos.';
-  if (msg.includes('Invalid login credentials')) return 'Email ou senha incorretos.';
-  if (msg.includes('Email not confirmed')) return 'Confirme seu email antes de entrar.';
-  if (msg.includes('Too many requests')) return 'Muitas tentativas. Aguarde e tente novamente.';
-  if (msg.includes('User not found')) return 'Usuário não encontrado.';
-  return msg;
-}
+import { traduzirErroAuth } from '../../utils/authErrors';
 
 export default function LoginEmailScreen() {
   const { signInWithEmail } = useAuth();

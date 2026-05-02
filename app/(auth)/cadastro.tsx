@@ -6,6 +6,7 @@ import { AppText } from '../../components/ui/AppText';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { traduzirErroAuth } from '../../utils/authErrors';
 
 export default function CadastroScreen() {
   const { signUp } = useAuth();
@@ -36,7 +37,7 @@ export default function CadastroScreen() {
         router.replace('/(tabs)');
       }
     } catch (e: any) {
-      Alert.alert('Erro', e.message ?? 'Não foi possível criar a conta. Tente novamente.');
+      Alert.alert('Erro', traduzirErroAuth(e.message));
     } finally {
       setLoading(false);
     }
