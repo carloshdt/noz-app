@@ -37,7 +37,8 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const [editandoIngIndex, setEditandoIngIndex] = useState<number | null>(null);
   const nomeIngRef = useRef<TextInput>(null);
   const scrollRef = useRef<ScrollView>(null);
-  const adicionarBtnRef = useRef<View>(null);
+  const ingSecaoY = useRef(0);
+  const adicionarBtnLocalY = useRef(0);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
 
@@ -67,13 +68,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
     } else {
       setTimeout(() => {
         nomeIngRef.current?.focus();
-        adicionarBtnRef.current?.measureLayout(
-          (scrollRef.current as any)?.getInnerViewNode(),
-          (_x: number, y: number) => {
-            scrollRef.current?.scrollTo({ y: y - 80, animated: true });
-          },
-          () => {}
-        );
+        scrollRef.current?.scrollTo({ y: ingSecaoY.current + adicionarBtnLocalY.current - 80, animated: true });
       }, 100);
     }
   }
@@ -166,7 +161,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           </View>
         </View>
 
-        <View className="gap-3">
+        <View className="gap-3" onLayout={(e) => { ingSecaoY.current = e.nativeEvent.layout.y; }}>
           <AppText variant="heading" className="text-[18px]">Ingredientes</AppText>
           {form.ingredientes.map((ing, i) =>
             editandoIngIndex === i ? (
@@ -221,7 +216,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
                   </View>
                 </Pressable>
               </View>
-              <View ref={adicionarBtnRef}>
+              <View onLayout={(e) => { adicionarBtnLocalY.current = e.nativeEvent.layout.y; }}>
                 <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
               </View>
             </View>

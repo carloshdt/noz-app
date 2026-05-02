@@ -10,9 +10,17 @@ function gerarId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
 
+function normalizarReceita(r: any): Receita {
+  return {
+    ...r,
+    categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
+  };
+}
+
 async function getCache(): Promise<Receita[]> {
   const json = await AsyncStorage.getItem(CACHE_KEY);
-  return json ? JSON.parse(json) : [];
+  const lista = json ? JSON.parse(json) : [];
+  return lista.map(normalizarReceita);
 }
 
 async function setCache(receitas: Receita[]) {
