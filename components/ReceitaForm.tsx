@@ -34,6 +34,7 @@ const formVazio = (): FormData => ({
 export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   const [form, setForm] = useState<FormData>(inicial ?? formVazio());
   const [novoIng, setNovoIng] = useState({ nome: '', quantidade: '', unidade: 'g' });
+  const [editandoIngIndex, setEditandoIngIndex] = useState<number | null>(null);
   const [modalUnidade, setModalUnidade] = useState(false);
   const [novaInst, setNovaInst] = useState('');
 
@@ -47,11 +48,31 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       quantidade: semQuantidade(novoIng.unidade) ? 0 : parseFloat(novoIng.quantidade),
       unidade: novoIng.unidade || 'g',
     };
-    setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, ing] }));
+    if (editandoIngIndex !== null) {
+      setForm((f) => {
+        const lista = [...f.ingredientes];
+        lista[editandoIngIndex] = ing;
+        return { ...f, ingredientes: lista };
+      });
+      setEditandoIngIndex(null);
+    } else {
+      setForm((f) => ({ ...f, ingredientes: [...f.ingredientes, ing] }));
+    }
     setNovoIng({ nome: '', quantidade: '', unidade: 'g' });
   }
 
+  function editarIngrediente(index: number) {
+    const ing = form.ingredientes[index];
+    setNovoIng({
+      nome: ing.nome,
+      quantidade: semQuantidade(ing.unidade) ? '' : String(ing.quantidade),
+      unidade: ing.unidade,
+    });
+    setEditandoIngIndex(index);
+  }
+
   function removerIngrediente(index: number) {
+    if (editandoIngIndex === index) { setEditandoIngIndex(null); setNovoIng({ nome: '', quantidade: '', unidade: 'g' }); }
     setForm((f) => ({ ...f, ingredientes: f.ingredientes.filter((_, i) => i !== index) }));
   }
 
@@ -113,13 +134,14 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
         <View className="gap-3">
           <AppText variant="heading" className="text-[18px]">Ingredientes</AppText>
           {form.ingredientes.map((ing, i) => (
-            <View key={i} className="flex-row items-center gap-2 bg-surface rounded-card px-3 py-2">
+            <Pressable key={i} onPress={() => editarIngrediente(i)}
+              className={`flex-row items-center gap-2 rounded-card px-3 py-2 ${editandoIngIndex === i ? 'bg-primary/10 border border-primary/30' : 'bg-surface'}`}>
               <AppText className="flex-1">{ing.nome}</AppText>
               <AppText variant="muted">{semQuantidade(ing.unidade) ? ing.unidade : `${ing.quantidade} ${ing.unidade}`}</AppText>
               <Pressable onPress={() => removerIngrediente(i)}>
                 <Trash2 size={16} color="#8C7B6B" />
               </Pressable>
-            </View>
+            </Pressable>
           ))}
           <View className="gap-2">
             <View className="flex-row gap-2">
@@ -129,16 +151,16 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
               )}
               <Pressable
                 onPress={() => setModalUnidade(true)}
-                className="w-20 border border-border rounded-card bg-surface px-2 justify-center"
-                style={{ height: 44 }}
+                className="border border-border rounded-card bg-surface px-2 justify-center"
+                style={{ height: 44, minWidth: 72, maxWidth: 100 }}
               >
                 <View className="flex-row items-center justify-between">
-                  <AppText className="text-[13px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
+                  <AppText className="text-[12px]" numberOfLines={1}>{novoIng.unidade || 'Unid.'}</AppText>
                   <ChevronDown size={14} color="#8C7B6B" />
                 </View>
               </Pressable>
             </View>
-            <Button label="Adicionar ingrediente" variant="secondary" onPress={adicionarIngrediente} />
+            <Button label={editandoIngIndex !== null ? 'Salvar alteração' : 'Adicionar ingrediente'} variant="secondary" onPress={adicionarIngrediente} />
           </View>
         </View>
 
