@@ -144,27 +144,54 @@ export default function CardapioScreen() {
             <AppText variant="muted" className="text-[13px] py-2">Nenhuma receita — toque em + para adicionar</AppText>
           ) : (
             <View className="gap-2">
-              {plano.receitas.map((pr) => {
+              {plano.receitas.flatMap((pr) => {
                 const r = receitas.find((x) => x.id === pr.receitaId);
-                if (!r) return null;
-                return (
-                  <Card key={pr.receitaId} className="flex-row items-center gap-3">
-                    <View className="flex-1">
-                      <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
-                      <AppText variant="muted" className="text-[12px]">
-                        {pr.dias && pr.dias.length > 0
-                          ? pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')
-                          : ''}
-                        {(pr.batchesSemDias ?? 0) > 0
-                          ? `${pr.dias?.length ? '  ·  ' : ''}Sem dias · ${pr.batchesSemDias! * r.porcoes} porções`
-                          : ''}
-                      </AppText>
-                    </View>
-                    <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
-                      <X size={16} color="#8C7B6B" />
-                    </Pressable>
-                  </Card>
-                );
+                if (!r) return [];
+                const cards = [];
+                if (pr.dias && pr.dias.length > 0) {
+                  cards.push(
+                    <Card key={`${pr.receitaId}-dias`} className="flex-row items-center gap-3">
+                      <View className="flex-1">
+                        <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
+                        <AppText variant="muted" className="text-[12px]">
+                          {pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')}
+                        </AppText>
+                      </View>
+                      <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
+                        <X size={16} color="#8C7B6B" />
+                      </Pressable>
+                    </Card>
+                  );
+                }
+                if ((pr.batchesSemDias ?? 0) > 0) {
+                  cards.push(
+                    <Card key={`${pr.receitaId}-semDias`} className="flex-row items-center gap-3">
+                      <View className="flex-1">
+                        <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
+                        <AppText variant="muted" className="text-[12px]">
+                          {`Sem dias definidos · ${pr.batchesSemDias! * r.porcoes} porções`}
+                        </AppText>
+                      </View>
+                      <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
+                        <X size={16} color="#8C7B6B" />
+                      </Pressable>
+                    </Card>
+                  );
+                }
+                if (cards.length === 0) {
+                  cards.push(
+                    <Card key={pr.receitaId} className="flex-row items-center gap-3">
+                      <View className="flex-1">
+                        <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
+                        <AppText variant="muted" className="text-[12px]">Sem dias definidos</AppText>
+                      </View>
+                      <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
+                        <X size={16} color="#8C7B6B" />
+                      </Pressable>
+                    </Card>
+                  );
+                }
+                return cards;
               })}
             </View>
           )}
