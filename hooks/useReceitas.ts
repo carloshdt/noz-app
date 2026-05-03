@@ -96,11 +96,6 @@ export function useReceitas() {
         return merged;
       });
 
-      // Sync pending offline changes
-      const pendentes = cache.filter((r) => r._pendingSync);
-      for (const r of pendentes) {
-        await _syncReceita(r, user.id);
-      }
     } catch {
       // offline: use existing cache
     }
@@ -166,18 +161,13 @@ export function useReceitas() {
         criadaEm: agora,
         atualizadaEm: agora,
         user_id: user?.id,
-        _pendingSync: true,
       };
-
-      setReceitas((prev) => {
-        const lista = [nova, ...prev];
-        setCache(lista);
-        return lista;
-      });
-
-      if (user) await _syncReceita(nova, user.id);
+      const lista = [nova, ...receitas];
+      setReceitas(lista);
+      await setCache(lista);
+      if (user) _syncReceita(nova, user.id);
     },
-    [user]
+    [user, receitas]
   );
 
   const remover = useCallback(
@@ -198,17 +188,14 @@ export function useReceitas() {
   const editar = useCallback(
     async (id: string, dados: Partial<Receita>) => {
       const agora = new Date().toISOString();
-      setReceitas((prev) => {
-        const lista = prev.map((r) =>
-          r.id === id ? { ...r, ...dados, atualizadaEm: agora } : r
-        );
-        setCache(lista);
-        return lista;
-      });
-
+      const lista = receitas.map((r) =>
+        r.id === id ? { ...r, ...dados, atualizadaEm: agora } : r
+      );
+      setReceitas(lista);
+      await setCache(lista);
       if (user) {
-        const atualizada = receitas.find((r) => r.id === id);
-        if (atualizada) await _syncReceita({ ...atualizada, ...dados, atualizadaEm: agora }, user.id);
+        const atualizada = lista.find((r) => r.id === id);
+        if (atualizada) _syncReceita(atualizada, user.id);
       }
     },
     [user, receitas]

@@ -16,7 +16,7 @@ type FormData = Omit<Receita, 'id' | 'criadaEm'>;
 
 type Props = {
   inicial?: FormData;
-  onSalvar: (dados: FormData) => void;
+  onSalvar: (dados: FormData) => Promise<void>;
   titulo: string;
 };
 
@@ -117,7 +117,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
     setForm((f) => ({ ...f, instrucoes: f.instrucoes.filter((_, i) => i !== index) }));
   }
 
-  function salvar() {
+  async function salvar() {
     if (!form.nome.trim()) {
       Alert.alert('Atenção', 'Dê um nome para a receita antes de salvar.');
       return;
@@ -129,7 +129,7 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
     const dadosFinais = novaInst.trim()
       ? { ...form, instrucoes: [...form.instrucoes, { texto: novaInst.trim(), ...(novaInstImagem ? { imagem: novaInstImagem } : {}) } as Instrucao] }
       : form;
-    onSalvar(dadosFinais);
+    await onSalvar(dadosFinais);
     router.back();
   }
 
