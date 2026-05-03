@@ -238,7 +238,6 @@ export default function CardapioScreen() {
                             <AppText variant="muted" className="text-[13px]">Sem receita</AppText>
                           )}
                         </View>
-                        <Plus size={16} color="#8C7B6B" />
                       </Pressable>
                     );
                   })}
