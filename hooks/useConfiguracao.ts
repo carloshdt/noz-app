@@ -36,5 +36,14 @@ export function useConfiguracao() {
     salvarConfig({ diaInicio: d });
   }, [salvarConfig]);
 
-  return { periodo, setPeriodo, diaInicio, setDiaInicio };
+  const recarregar = useCallback(async () => {
+    const json = await AsyncStorage.getItem(KEY);
+    if (json) {
+      const config = JSON.parse(json);
+      if (config.periodo) setPeriodoState(config.periodo);
+      if (config.diaInicio) setDiaInicioState(config.diaInicio);
+    }
+  }, []);
+
+  return { periodo, setPeriodo, diaInicio, setDiaInicio, recarregar };
 }

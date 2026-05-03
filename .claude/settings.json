@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "code-review-graph update --skip-flows",
+            "command": "C:\\Users\\carlo\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\code-review-graph.exe update --skip-flows",
             "timeout": 30
           }
         ]

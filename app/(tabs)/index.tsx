@@ -15,15 +15,24 @@ import { CATEGORIAS } from '../../constants/categorias';
 export default function ReceitasScreen() {
   const { receitas, buscar, carregarReceitas } = useReceitas();
   const [busca, setBusca] = useState('');
-  const [categoriaAtiva, setCategoriaAtiva] = useState('Todas');
+  const [categoriasAtivas, setCategoriasAtivas] = useState<Set<string>>(new Set());
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
+  function toggleCategoria(cat: string) {
+    setCategoriasAtivas((prev) => {
+      const next = new Set(prev);
+      if (cat === 'Todas') return new Set();
+      next.has(cat) ? next.delete(cat) : next.add(cat);
+      return next;
+    });
+  }
+
   const receitasFiltradas = useMemo(() => {
     const base = busca.trim() ? buscar(busca) : receitas;
-    if (categoriaAtiva === 'Todas') return base;
-    return base.filter((r) => r.categorias.includes(categoriaAtiva));
-  }, [receitas, busca, categoriaAtiva]);
+    if (categoriasAtivas.size === 0) return base;
+    return base.filter((r) => r.categorias.some((c) => categoriasAtivas.has(c)));
+  }, [receitas, busca, categoriasAtivas]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
@@ -39,8 +48,8 @@ export default function ReceitasScreen() {
             <CategoriaChip
               key={cat}
               label={cat}
-              ativo={categoriaAtiva === cat}
-              onPress={() => setCategoriaAtiva(cat)}
+              ativo={cat === 'Todas' ? categoriasAtivas.size === 0 : categoriasAtivas.has(cat)}
+              onPress={() => toggleCategoria(cat)}
             />
           ))}
         </ScrollView>
@@ -56,7 +65,6 @@ export default function ReceitasScreen() {
         <FlatList
           data={receitasFiltradas}
           keyExtractor={(item) => item.id}
-          numColumns={2}
           contentContainerStyle={{ padding: 12 }}
           renderItem={({ item }) => (
             <ReceitaCard

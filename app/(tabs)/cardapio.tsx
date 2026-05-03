@@ -1,7 +1,7 @@
 import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useLayoutEffect, useMemo } from 'react';
-import { useNavigation } from 'expo-router';
+import { useState, useLayoutEffect, useMemo, useCallback } from 'react';
+import { useNavigation, useFocusEffect } from 'expo-router';
 import { Plus, X, Minus } from 'lucide-react-native';
 import { Receita, PeriodoPlanejamento, DiaPorcao } from '../../types';
 import { useCardapio } from '../../hooks/useCardapio';
@@ -38,8 +38,10 @@ type Etapa = 'receitas' | 'batches' | 'dias';
 export default function CardapioScreen() {
   const navigation = useNavigation();
   const { plano, adicionarReceita, removerReceita, limpar } = useCardapio();
-  const { periodo, diaInicio } = useConfiguracao();
+  const { periodo, diaInicio, recarregar } = useConfiguracao();
   const { receitas } = useReceitas();
+
+  useFocusEffect(useCallback(() => { recarregar(); }, [recarregar]));
 
   const [modalAberto, setModalAberto] = useState(false);
   const [receitaSelecionada, setReceitaSelecionada] = useState<Receita | null>(null);
@@ -166,38 +168,52 @@ export default function CardapioScreen() {
         {/* Lista de dias */}
         <View className="px-4 pt-2">
           <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
-          <View className="gap-2">
-            {datas.map((data, i) => {
-              const infos = receitasDoDia(i);
-              return (
-                <Pressable
-                  key={i}
-                  onPress={() => abrirModal(i)}
-                  className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${infos.length > 0 ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
-                >
-                  <View className="items-center shrink-0" style={{ width: 44 }}>
-                    <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center">
-                      <AppText className="font-sans-bold text-primary text-[15px]">{data.getDate()}</AppText>
-                    </View>
-                    <AppText className="text-primary text-[10px] mt-0.5">{NOMES_DIA[data.getDay()]}</AppText>
-                  </View>
-                  <View className="flex-1 gap-0.5">
-                    {infos.length > 0 ? infos.map(({ receita, porcoes }) => (
-                      <View key={receita.id}>
-                        <AppText variant="heading" className="text-[14px]">{receita.nome}</AppText>
-                        <AppText variant="muted" className="text-[12px]">
-                          {porcoes} porção{porcoes > 1 ? 's' : ''}
-                        </AppText>
-                      </View>
-                    )) : (
-                      <AppText variant="muted" className="text-[13px]">Sem receita</AppText>
-                    )}
-                  </View>
-                  <Plus size={16} color="#8C7B6B" />
-                </Pressable>
-              );
-            })}
-          </View>
+          {Array.from({ length: Math.ceil(datas.length / 7) }, (_, semana) => {
+            const inicio = semana * 7;
+            const diasDaSemana = datas.slice(inicio, inicio + 7);
+            return (
+              <View key={semana} className="mb-4">
+                {datas.length > 7 && (
+                  <AppText variant="muted" className="text-[11px] uppercase tracking-wider mb-2">
+                    {`Semana ${semana + 1}  ·  ${diasDaSemana[0].getDate()} ${NOMES_DIA[diasDaSemana[0].getDay()]} – ${diasDaSemana[diasDaSemana.length - 1].getDate()} ${NOMES_DIA[diasDaSemana[diasDaSemana.length - 1].getDay()]}`}
+                  </AppText>
+                )}
+                <View className="gap-2">
+                  {diasDaSemana.map((data, j) => {
+                    const i = inicio + j;
+                    const infos = receitasDoDia(i);
+                    return (
+                      <Pressable
+                        key={i}
+                        onPress={() => abrirModal(i)}
+                        className={`flex-row items-center gap-3 rounded-card border px-4 py-3 ${infos.length > 0 ? 'border-primary/30 bg-primary/5' : 'border-border bg-surface'}`}
+                      >
+                        <View className="items-center shrink-0" style={{ width: 44 }}>
+                          <View className="w-10 h-10 bg-primary/10 rounded-full items-center justify-center">
+                            <AppText className="font-sans-bold text-primary text-[15px]">{data.getDate()}</AppText>
+                          </View>
+                          <AppText className="text-primary text-[10px] mt-0.5">{NOMES_DIA[data.getDay()]}</AppText>
+                        </View>
+                        <View className="flex-1 gap-0.5">
+                          {infos.length > 0 ? infos.map(({ receita, porcoes }) => (
+                            <View key={receita.id}>
+                              <AppText variant="heading" className="text-[14px]">{receita.nome}</AppText>
+                              <AppText variant="muted" className="text-[12px]">
+                                {porcoes} porção{porcoes > 1 ? 's' : ''}
+                              </AppText>
+                            </View>
+                          )) : (
+                            <AppText variant="muted" className="text-[13px]">Sem receita</AppText>
+                          )}
+                        </View>
+                        <Plus size={16} color="#8C7B6B" />
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          })}
         </View>
       </ScrollView>
 

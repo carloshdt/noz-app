@@ -16,8 +16,8 @@ const PERIODOS: Opcao<PeriodoPlanejamento>[] = [
 ];
 
 const DIAS_INICIO: Opcao<DiaInicio>[] = [
-  { valor: 'seg', label: 'Segunda-feira' },
-  { valor: 'dom', label: 'Domingo'       },
+  { valor: 'seg', label: 'Segunda-feira', descricao: 'Seg → Dom' },
+  { valor: 'dom', label: 'Domingo',       descricao: 'Dom → Sáb' },
 ];
 
 function Secao<T extends string>({

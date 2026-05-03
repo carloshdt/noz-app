@@ -11,9 +11,9 @@ export function CategoriaChip({ label, ativo, onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
-      className={`px-4 py-2 rounded-full mr-2 ${ativo ? 'bg-primary' : 'bg-surface border border-border'}`}
+      className={`px-2.5 py-0.5 rounded-full mr-1.5 ${ativo ? 'bg-primary' : 'bg-surface border border-border'}`}
     >
-      <AppText className={`text-[14px] font-sans-medium ${ativo ? 'text-white' : 'text-text'}`}>
+      <AppText className={`text-[11px] font-sans-medium ${ativo ? 'text-white' : 'text-text'}`}>
         {label}
       </AppText>
     </Pressable>
