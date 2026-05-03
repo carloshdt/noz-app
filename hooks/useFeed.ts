@@ -26,33 +26,41 @@ export function useFeed() {
 
       const { data, error } = await supabase
         .from('receitas')
-        .select(
-          'id, nome, categorias, imagem, tempo_preparo, porcoes, dificuldade, criada_em, user_id, profiles!inner(id, nome, foto_url, total_importacoes)'
-        )
+        .select('id, nome, categorias, imagem, tempo_preparo, porcoes, dificuldade, criada_em, user_id')
         .eq('publica', true)
         .neq('user_id', user.id)
         .order('criada_em', { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
 
       if (!error && data) {
+        const userIds = [...new Set((data as any[]).map((r) => r.user_id))];
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, nome, foto_url, total_importacoes')
+          .in('id', userIds);
+        const profilesMap = Object.fromEntries((profilesData ?? []).map((p: any) => [p.id, p]));
+
         const mapeadas: ReceitaFeed[] = (data as any[])
-          .map((r) => ({
-            id: r.id,
-            user_id: r.user_id,
-            nome: r.nome,
-            categorias: Array.isArray(r.categorias) ? r.categorias : [],
-            imagem: r.imagem ?? undefined,
-            tempoPreparo: r.tempo_preparo,
-            porcoes: r.porcoes,
-            dificuldade: r.dificuldade,
-            criadaEm: r.criada_em,
-            criador: {
-              id: r.profiles.id,
-              nome: r.profiles.nome,
-              foto_url: r.profiles.foto_url ?? undefined,
-              total_importacoes: r.profiles.total_importacoes ?? 0,
-            },
-          }))
+          .map((r) => {
+            const p = profilesMap[r.user_id] ?? { id: r.user_id, nome: 'Usuário', foto_url: null, total_importacoes: 0 };
+            return {
+              id: r.id,
+              user_id: r.user_id,
+              nome: r.nome,
+              categorias: Array.isArray(r.categorias) ? r.categorias : [],
+              imagem: r.imagem ?? undefined,
+              tempoPreparo: r.tempo_preparo,
+              porcoes: r.porcoes,
+              dificuldade: r.dificuldade,
+              criadaEm: r.criada_em,
+              criador: {
+                id: p.id,
+                nome: p.nome,
+                foto_url: p.foto_url ?? undefined,
+                total_importacoes: p.total_importacoes ?? 0,
+              },
+            };
+          })
           .sort(
             (a, b) =>
               calcularScore(b.criadaEm, b.criador.total_importacoes) -

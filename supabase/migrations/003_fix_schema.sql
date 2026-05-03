@@ -1,0 +1,3 @@
+-- supabase/migrations/003_fix_schema.sql
+-- Schema already correct (instrucoes jsonb, categorias array, no categoria column)
+-- No changes needed
