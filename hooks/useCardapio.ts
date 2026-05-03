@@ -51,8 +51,11 @@ export function useCardapio() {
       const receitas = existe
         ? prev.receitas.map((r) => {
             if (r.receitaId !== receitaId) return r;
-            if (!dias || dias.length === 0) return { ...r, batches: r.batches + batches };
-            // Merge new dias with existing, accumulate porcoes for same day
+            // Sem dias: acumula batchesSemDias separadamente
+            if (!dias || dias.length === 0) {
+              return { ...r, batchesSemDias: (r.batchesSemDias ?? 0) + batches };
+            }
+            // Com dias: mescla dias e acumula batches com dias
             const existing = r.dias ?? [];
             const merged = [...existing];
             dias.forEach((nd) => {
@@ -62,7 +65,9 @@ export function useCardapio() {
             });
             return { ...r, batches: r.batches + batches, dias: merged };
           })
-        : [...prev.receitas, { receitaId, batches, dias }];
+        : dias?.length
+          ? [...prev.receitas, { receitaId, batches, batchesSemDias: 0, dias }]
+          : [...prev.receitas, { receitaId, batches: 0, batchesSemDias: batches }];
       const novo = { ...prev, receitas };
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
       return novo;
@@ -98,11 +103,12 @@ export function useCardapio() {
 
   const gerarListaCompras = useCallback((todasReceitas: Receita[]): ItemCompra[] => {
     const mapa = new Map<string, ItemCompra>();
-    plano.receitas.forEach(({ receitaId, batches }) => {
+    plano.receitas.forEach(({ receitaId, batches, batchesSemDias }) => {
+      const totalBatches = batches + (batchesSemDias ?? 0);
       const receita = todasReceitas.find((r) => r.id === receitaId);
       if (!receita) return;
       receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
-        const qtd = quantidade * batches;
+        const qtd = quantidade * totalBatches;
         const chave = `${nome.toLowerCase()}|${unidade}`;
         if (mapa.has(chave)) {
           const item = mapa.get(chave)!;

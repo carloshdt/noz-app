@@ -69,6 +69,7 @@ export type DiaPorcao = {
 export type PlanoReceita = {
   receitaId: string;
   batches: number;
+  batchesSemDias?: number;
   dias?: DiaPorcao[];
 };
 

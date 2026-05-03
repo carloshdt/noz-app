@@ -154,7 +154,10 @@ export default function CardapioScreen() {
                       <AppText variant="muted" className="text-[12px]">
                         {pr.dias && pr.dias.length > 0
                           ? pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')
-                          : `Sem dias definidos · ${pr.batches * r.porcoes} porções`}
+                          : ''}
+                        {(pr.batchesSemDias ?? 0) > 0
+                          ? `${pr.dias?.length ? '  ·  ' : ''}Sem dias · ${pr.batchesSemDias! * r.porcoes} porções`
+                          : ''}
                       </AppText>
                     </View>
                     <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
