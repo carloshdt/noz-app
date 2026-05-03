@@ -1,21 +1,9 @@
-import { View, Pressable } from 'react-native';
-import { Tabs, usePathname } from 'expo-router';
-import { useState, useEffect } from 'react';
-import { Menu, UtensilsCrossed, Rss, CalendarDays, ShoppingCart } from 'lucide-react-native';
-import { Drawer } from '../../components/Drawer';
-import { useAuth } from '../../hooks/useAuth';
-import { useProfile } from '../../hooks/useProfile';
+import { View } from 'react-native';
+import { Tabs } from 'expo-router';
+import { UtensilsCrossed, Rss, CalendarDays, ShoppingCart, UserCircle } from 'lucide-react-native';
+import { AppText } from '../../components/ui/AppText';
 
 export default function TabLayout() {
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const { user } = useAuth();
-  const { profile, refreshProfile } = useProfile();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    refreshProfile();
-  }, [pathname]);
-
   return (
     <View style={{ flex: 1 }}>
       <Tabs
@@ -28,15 +16,6 @@ export default function TabLayout() {
             fontSize: 20,
             color: '#2C1810',
           },
-          headerLeft: () => (
-            <Pressable
-              onPress={() => setDrawerVisible(true)}
-              style={{ paddingLeft: 16, paddingRight: 8 }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Menu size={22} color="#2C1810" />
-            </Pressable>
-          ),
           tabBarActiveTintColor: '#8B4513',
           tabBarInactiveTintColor: '#8C7B6B',
           tabBarStyle: {
@@ -53,15 +32,9 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'Receitas',
+            headerShown: false,
             tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} />,
-          }}
-        />
-        <Tabs.Screen
-          name="feed"
-          options={{
-            title: 'Feed',
-            tabBarIcon: ({ color }) => <Rss size={22} color={color} />,
+            title: 'Receitas',
           }}
         />
         <Tabs.Screen
@@ -72,22 +45,30 @@ export default function TabLayout() {
           }}
         />
         <Tabs.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            headerTitle: () => (
+              <AppText style={{ fontSize: 32 }}>🌰</AppText>
+            ),
+            tabBarIcon: ({ color }) => <Rss size={22} color={color} />,
+          }}
+        />
+        <Tabs.Screen
           name="compras"
           options={{
-            title: 'Compras',
+            title: 'Mercado',
             tabBarIcon: ({ color }) => <ShoppingCart size={22} color={color} />,
           }}
         />
-      </Tabs>
-
-      {user && (
-        <Drawer
-          visible={drawerVisible}
-          onClose={() => setDrawerVisible(false)}
-          user={user}
-          profile={profile}
+        <Tabs.Screen
+          name="perfil"
+          options={{
+            title: 'Perfil',
+            tabBarIcon: ({ color }) => <UserCircle size={22} color={color} />,
+          }}
         />
-      )}
+      </Tabs>
     </View>
   );
 }

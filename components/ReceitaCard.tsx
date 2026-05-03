@@ -7,9 +7,10 @@ import { Receita } from '../types';
 type Props = {
   receita: Receita;
   onPress: () => void;
+  criadorNome?: string;
 };
 
-export function ReceitaCard({ receita, onPress }: Props) {
+export function ReceitaCard({ receita, onPress, criadorNome }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -33,6 +34,11 @@ export function ReceitaCard({ receita, onPress }: Props) {
           <Clock size={12} color="#8C7B6B" />
           <AppText variant="muted" className="text-[12px]">{receita.tempoPreparo} min</AppText>
         </View>
+        {criadorNome ? (
+          <AppText variant="muted" style={{ fontSize: 11, marginTop: 2 }}>
+            Importada de {criadorNome}
+          </AppText>
+        ) : null}
       </View>
       <View style={{ position: 'absolute', top: 8, right: 8 }}>
         <Badge label={receita.dificuldade} variant={receita.dificuldade === 'Fácil' ? 'accent' : 'default'} />

@@ -21,20 +21,28 @@ export default function ReceitaDetalhesScreen() {
   const receita = receitas.find((r) => r.id === id);
   const [originalAtualizada, setOriginalAtualizada] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
+  const [criadorOriginal, setCriadorOriginal] = useState<{ id: string; nome: string; foto_url?: string } | null>(null);
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
   useEffect(() => {
-    if (!receita?.fonte_receita_id) return;
+    if (!receita?.fonte_receita_id) { setCriadorOriginal(null); return; }
     supabase
       .from('receitas')
-      .select('atualizada_em')
+      .select('atualizada_em, user_id')
       .eq('id', receita.fonte_receita_id)
       .single()
-      .then(({ data }) => {
-        if (data && receita.fonte_atualizada_em) {
+      .then(async ({ data }) => {
+        if (!data) return;
+        if (receita.fonte_atualizada_em) {
           setOriginalAtualizada(data.atualizada_em > receita.fonte_atualizada_em);
         }
+        const { data: perfil } = await supabase
+          .from('profiles')
+          .select('id, nome, foto_url')
+          .eq('id', data.user_id)
+          .single();
+        if (perfil) setCriadorOriginal(perfil);
       });
   }, [receita?.fonte_receita_id, receita?.fonte_atualizada_em]);
 
@@ -100,6 +108,27 @@ export default function ReceitaDetalhesScreen() {
           <View className="flex-row flex-wrap gap-2">
             {receita.categorias.map((c) => <Badge key={c} label={c} variant="accent" />)}
           </View>
+
+          {criadorOriginal && (
+            <Pressable
+              onPress={() => router.push(`/perfil/${criadorOriginal.id}` as any)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'white', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
+            >
+              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {criadorOriginal.foto_url
+                  ? <Image source={{ uri: criadorOriginal.foto_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  : <AppText style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
+                      {criadorOriginal.nome.trim().split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </AppText>
+                }
+              </View>
+              <View style={{ flex: 1 }}>
+                <AppText variant="muted" style={{ fontSize: 11 }}>Importada de</AppText>
+                <AppText style={{ fontWeight: '600', fontSize: 14 }}>{criadorOriginal.nome}</AppText>
+              </View>
+              <AppText variant="muted" style={{ fontSize: 12 }}>Ver perfil →</AppText>
+            </Pressable>
+          )}
 
           <View className="flex-row justify-around">
             <View className="items-center gap-1">

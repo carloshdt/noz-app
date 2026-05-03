@@ -1,6 +1,6 @@
 import { View, FlatList, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
@@ -11,13 +11,36 @@ import { CategoriaChip } from '../../components/CategoriaChip';
 import { Input } from '../../components/ui/Input';
 import { AppText } from '../../components/ui/AppText';
 import { CATEGORIAS } from '../../constants/categorias';
+import { supabase } from '../../lib/supabase';
 
 export default function ReceitasScreen() {
   const { receitas, buscar, carregarReceitas } = useReceitas();
   const [busca, setBusca] = useState('');
   const [categoriasAtivas, setCategoriasAtivas] = useState<Set<string>>(new Set());
+  const [criadores, setCriadores] = useState<Record<string, string>>({});
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
+
+  useEffect(() => {
+    const importadas = receitas.filter((r) => r.fonte_receita_id);
+    if (!importadas.length) { setCriadores({}); return; }
+
+    const fonteIds = [...new Set(importadas.map((r) => r.fonte_receita_id!))];
+
+    supabase.from('receitas').select('id, user_id').in('id', fonteIds)
+      .then(({ data: originais }) => {
+        if (!originais?.length) return;
+        const userIds = [...new Set(originais.map((r) => r.user_id))];
+        supabase.from('profiles').select('id, nome').in('id', userIds)
+          .then(({ data: profiles }) => {
+            if (!profiles) return;
+            const profileMap = Object.fromEntries(profiles.map((p) => [p.id, p.nome]));
+            const result: Record<string, string> = {};
+            originais.forEach((o) => { result[o.id] = profileMap[o.user_id] ?? ''; });
+            setCriadores(result);
+          });
+      });
+  }, [receitas]);
 
   function toggleCategoria(cat: string) {
     setCategoriasAtivas((prev) => {
@@ -35,7 +58,7 @@ export default function ReceitasScreen() {
   }, [receitas, busca, categoriasAtivas]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom', 'left', 'right']}>
       <View className="px-4 pt-4 pb-2 gap-4">
         <AppText variant="title">O que vamos cozinhar?</AppText>
         <Input
@@ -70,6 +93,7 @@ export default function ReceitasScreen() {
             <ReceitaCard
               receita={item}
               onPress={() => router.push(`/receita/${item.id}`)}
+              criadorNome={item.fonte_receita_id ? criadores[item.fonte_receita_id] : undefined}
             />
           )}
         />
