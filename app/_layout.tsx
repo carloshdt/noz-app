@@ -55,7 +55,7 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <SafeAreaProvider>
-        <StatusBar style="dark" />
+        <StatusBar style="dark" backgroundColor="#FAF6F1" translucent={false} />
         <RootNavigator />
       </SafeAreaProvider>
     </AuthProvider>
