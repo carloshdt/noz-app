@@ -126,9 +126,18 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
       Alert.alert('Atenção', 'Informe quantas porções a receita rende (mínimo 1).');
       return;
     }
+    let formFinal = form;
+    if (novoIng.nome.trim()) {
+      const ing: Ingrediente = {
+        nome: novoIng.nome.trim(),
+        quantidade: semQuantidade(novoIng.unidade) ? 0 : parseFloat(novoIng.quantidade) || 0,
+        unidade: novoIng.unidade || 'g',
+      };
+      formFinal = { ...formFinal, ingredientes: [...formFinal.ingredientes, ing] };
+    }
     const dadosFinais = novaInst.trim()
-      ? { ...form, instrucoes: [...form.instrucoes, { texto: novaInst.trim(), ...(novaInstImagem ? { imagem: novaInstImagem } : {}) } as Instrucao] }
-      : form;
+      ? { ...formFinal, instrucoes: [...formFinal.instrucoes, { texto: novaInst.trim(), ...(novaInstImagem ? { imagem: novaInstImagem } : {}) } as Instrucao] }
+      : formFinal;
     await onSalvar(dadosFinais);
     router.back();
   }

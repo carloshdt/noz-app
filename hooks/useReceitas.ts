@@ -79,22 +79,33 @@ export function useReceitas() {
       }));
 
       // Merge Supabase data with in-memory/cache ingredients to handle race condition
-      // where _syncReceita hasn't finished when carregarReceitas fires
+      // where _syncReceita hasn't finished when carregarReceitas fires.
+      // Functional update accesses current state without adding it as a dep.
       setReceitas((current) => {
         const currentMap = new Map(current.map((r) => [r.id, r]));
-        const merged = mapeadas.map((r) => {
+        return mapeadas.map((r) => {
           if (r.ingredientes.length > 0) return r;
-          const localIngredientes =
-            currentMap.get(r.id)?.ingredientes ?? cacheMap.get(r.id)?.ingredientes ?? [];
-          if (localIngredientes.length > 0) {
-            _syncReceita({ ...r, ingredientes: localIngredientes }, user.id);
-            return { ...r, ingredientes: localIngredientes };
-          }
-          return r;
+          return {
+            ...r,
+            ingredientes:
+              currentMap.get(r.id)?.ingredientes ??
+              cacheMap.get(r.id)?.ingredientes ??
+              [],
+          };
         });
-        setCache(merged);
-        return merged;
       });
+
+      // Write cache and re-sync recipes that still have no ingredients in Supabase
+      const toResync: Receita[] = [];
+      const merged = mapeadas.map((r) => {
+        if (r.ingredientes.length > 0) return r;
+        const localIngredientes =
+          cacheMap.get(r.id)?.ingredientes ?? [];
+        if (localIngredientes.length > 0) toResync.push({ ...r, ingredientes: localIngredientes });
+        return { ...r, ingredientes: localIngredientes };
+      });
+      await setCache(merged);
+      for (const r of toResync) _syncReceita(r, user.id);
 
     } catch {
       // offline: use existing cache
