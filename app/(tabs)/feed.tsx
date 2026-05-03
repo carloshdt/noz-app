@@ -1,10 +1,11 @@
-import { View, FlatList, ActivityIndicator, TextInput, Pressable, Image } from 'react-native';
-import { useCallback, useState, useEffect, useLayoutEffect } from 'react';
+import { View, FlatList, ScrollView, ActivityIndicator, TextInput, Pressable, Image } from 'react-native';
+import { useCallback, useState, useEffect, useLayoutEffect, useMemo } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, X } from 'lucide-react-native';
+import { Search, X, SlidersHorizontal } from 'lucide-react-native';
 import { useFeed } from '../../hooks/useFeed';
+import { CATEGORIAS } from '../../constants/categorias';
 import { useSalvarReceita } from '../../hooks/useSalvarReceita';
 import { FeedCard } from '../../components/FeedCard';
 import { AppText } from '../../components/ui/AppText';
@@ -28,21 +29,37 @@ export default function FeedScreen() {
   const [resultados, setResultados] = useState<Resultado[]>([]);
   const [buscando, setBuscando] = useState(false);
 
+  const [filtrosFeedAbertos, setFiltrosFeedAbertos] = useState(false);
+  const [feedCategoria, setFeedCategoria] = useState<string | null>(null);
+  const [feedTempo, setFeedTempo] = useState<number | null>(null);
+  const [feedDificuldade, setFeedDificuldade] = useState<string | null>(null);
+
   const navigation = useNavigation();
+
+  const filtrosFeedAtivos = (feedCategoria !== null ? 1 : 0) + (feedTempo !== null ? 1 : 0) + (feedDificuldade !== null ? 1 : 0);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => setBuscaAberta(true)}
-          style={{ paddingRight: 16, paddingLeft: 8 }}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Search size={30} color="#2C1810" />
-        </Pressable>
+        <View style={{ flexDirection: 'row', alignItems: 'center', paddingRight: 16, gap: 4 }}>
+          <Pressable
+            onPress={() => setFiltrosFeedAbertos((v) => !v)}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={{ padding: 6 }}
+          >
+            <SlidersHorizontal size={22} color={filtrosFeedAtivos > 0 ? '#8B4513' : '#2C1810'} />
+          </Pressable>
+          <Pressable
+            onPress={() => setBuscaAberta(true)}
+            style={{ paddingLeft: 4 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Search size={30} color="#2C1810" />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation]);
+  }, [navigation, filtrosFeedAtivos, filtrosFeedAbertos]);
 
   useFocusEffect(useCallback(() => { recarregar(); }, []));
 
@@ -115,6 +132,14 @@ export default function FeedScreen() {
     setSalvas((prev) => { const next = new Map(prev); next.delete(receitaId); return next; });
   }
 
+  const receitasFeedFiltradas = useMemo(() => {
+    let base = receitas;
+    if (feedCategoria) base = base.filter((r) => r.categorias.includes(feedCategoria));
+    if (feedTempo !== null) base = base.filter((r) => r.tempoPreparo <= feedTempo);
+    if (feedDificuldade !== null) base = base.filter((r) => r.dificuldade === feedDificuldade);
+    return base;
+  }, [receitas, feedCategoria, feedTempo, feedDificuldade]);
+
   const chips: { label: string; value: Filtro }[] = [
     { label: 'Todos', value: 'todos' },
     { label: 'Receitas', value: 'receitas' },
@@ -163,6 +188,57 @@ export default function FeedScreen() {
             </View>
           </View>
         </SafeAreaView>
+      )}
+
+      {/* Painel de filtros do feed */}
+      {!buscaAberta && filtrosFeedAbertos && (
+        <View style={{ backgroundColor: '#FAF6F1', paddingHorizontal: 16, paddingBottom: 10, gap: 8 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16 }} contentContainerStyle={{ paddingHorizontal: 16, gap: 6 }}>
+            {CATEGORIAS.filter((c) => c !== 'Todas').map((cat) => (
+              <Pressable
+                key={cat}
+                onPress={() => setFeedCategoria(feedCategoria === cat ? null : cat)}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, marginRight: 2,
+                  backgroundColor: feedCategoria === cat ? '#8B4513' : 'white',
+                  borderWidth: 1, borderColor: feedCategoria === cat ? '#8B4513' : '#E5E7EB',
+                }}
+              >
+                <AppText style={{ fontSize: 12, color: feedCategoria === cat ? 'white' : '#6B7280' }}>{cat}</AppText>
+              </Pressable>
+            ))}
+          </ScrollView>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {[{ label: 'até 15 min', valor: 15 }, { label: 'até 30 min', valor: 30 }, { label: 'até 1h', valor: 60 }].map((t) => (
+              <Pressable
+                key={t.valor}
+                onPress={() => setFeedTempo(feedTempo === t.valor ? null : t.valor)}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: feedTempo === t.valor ? '#8B4513' : 'white',
+                  borderWidth: 1, borderColor: feedTempo === t.valor ? '#8B4513' : '#E5E7EB',
+                }}
+              >
+                <AppText style={{ fontSize: 12, color: feedTempo === t.valor ? 'white' : '#6B7280' }}>{t.label}</AppText>
+              </Pressable>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {(['Fácil', 'Médio', 'Difícil'] as const).map((d) => (
+              <Pressable
+                key={d}
+                onPress={() => setFeedDificuldade(feedDificuldade === d ? null : d)}
+                style={{
+                  paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: feedDificuldade === d ? '#8B4513' : 'white',
+                  borderWidth: 1, borderColor: feedDificuldade === d ? '#8B4513' : '#E5E7EB',
+                }}
+              >
+                <AppText style={{ fontSize: 12, color: feedDificuldade === d ? 'white' : '#6B7280' }}>{d}</AppText>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       )}
 
       {/* Resultados da busca */}
@@ -234,7 +310,7 @@ export default function FeedScreen() {
         >
           {itemHeight > 0 && (
             <FlatList
-              data={receitas}
+              data={receitasFeedFiltradas}
               keyExtractor={(item) => item.id}
               pagingEnabled
               showsVerticalScrollIndicator={false}

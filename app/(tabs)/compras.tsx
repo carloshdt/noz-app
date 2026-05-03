@@ -39,15 +39,14 @@ export default function ComprasScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
-      <View className="px-4 pt-4 pb-2 flex-row justify-between items-center">
-        <AppText variant="title">Lista de Compras</AppText>
-        {marcados.size > 0 && (
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom', 'left', 'right']}>
+      {marcados.size > 0 && (
+        <View className="px-4 pt-3 pb-1 flex-row justify-end">
           <Pressable onPress={limpar}>
             <AppText variant="muted" className="text-[13px]">Limpar marcados</AppText>
           </Pressable>
-        )}
-      </View>
+        </View>
+      )}
 
       <FlatList
         data={itens}

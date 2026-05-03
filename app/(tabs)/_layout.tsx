@@ -58,6 +58,7 @@ export default function TabLayout() {
           name="compras"
           options={{
             title: 'Mercado',
+            headerShown: false,
             tabBarIcon: ({ color }) => <ShoppingCart size={22} color={color} />,
           }}
         />

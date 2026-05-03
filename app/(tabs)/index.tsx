@@ -1,23 +1,50 @@
-import { View, FlatList, ScrollView, Pressable } from 'react-native';
+import { View, FlatList, Pressable, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useEffect } from 'react';
 import { router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback } from 'react';
-import { Plus } from 'lucide-react-native';
+import { Funnel, Plus, X } from 'lucide-react-native';
 import { useReceitas } from '../../hooks/useReceitas';
 import { ReceitaCard } from '../../components/ReceitaCard';
-import { CategoriaChip } from '../../components/CategoriaChip';
-import { Input } from '../../components/ui/Input';
 import { AppText } from '../../components/ui/AppText';
 import { CATEGORIAS } from '../../constants/categorias';
 import { supabase } from '../../lib/supabase';
+
+type FilterOptionProps = {
+  label: string;
+  ativo: boolean;
+  onPress: () => void;
+};
+
+function FilterOption({ label, ativo, onPress }: FilterOptionProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={{ width: '31%' }}
+      className={`h-10 rounded-xl border items-center justify-center px-2 ${
+        ativo ? 'bg-primary border-primary' : 'bg-surface border-border'
+      }`}
+    >
+      <AppText
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        className={`text-[12px] font-sans-medium ${ativo ? 'text-white' : 'text-text'}`}
+      >
+        {label}
+      </AppText>
+    </Pressable>
+  );
+}
 
 export default function ReceitasScreen() {
   const { receitas, buscar, carregarReceitas } = useReceitas();
   const [busca, setBusca] = useState('');
   const [categoriasAtivas, setCategoriasAtivas] = useState<Set<string>>(new Set());
   const [criadores, setCriadores] = useState<Record<string, string>>({});
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [filtroTempo, setFiltroTempo] = useState<number | null>(null);
+  const [filtroDificuldade, setFiltroDificuldade] = useState<string | null>(null);
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
@@ -51,32 +78,146 @@ export default function ReceitasScreen() {
     });
   }
 
+  function limparFiltros() {
+    setCategoriasAtivas(new Set());
+    setFiltroTempo(null);
+    setFiltroDificuldade(null);
+  }
+
+  const filtrosAtivos = categoriasAtivas.size + (filtroTempo !== null ? 1 : 0) + (filtroDificuldade !== null ? 1 : 0);
+
   const receitasFiltradas = useMemo(() => {
-    const base = busca.trim() ? buscar(busca) : receitas;
-    if (categoriasAtivas.size === 0) return base;
-    return base.filter((r) => r.categorias.some((c) => categoriasAtivas.has(c)));
-  }, [receitas, busca, categoriasAtivas]);
+    let base = busca.trim() ? buscar(busca) : receitas;
+    if (categoriasAtivas.size > 0) base = base.filter((r) => r.categorias.some((c) => categoriasAtivas.has(c)));
+    if (filtroTempo !== null) base = base.filter((r) => r.tempoPreparo <= filtroTempo);
+    if (filtroDificuldade !== null) base = base.filter((r) => r.dificuldade === filtroDificuldade);
+    return base;
+  }, [receitas, busca, categoriasAtivas, filtroTempo, filtroDificuldade]);
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom', 'left', 'right']}>
       <View className="px-4 pt-4 pb-2 gap-4">
         <AppText variant="title">O que vamos cozinhar?</AppText>
-        <Input
-          placeholder="Buscar receitas..."
-          value={busca}
-          onChangeText={setBusca}
-        />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-4 px-4">
-          {CATEGORIAS.map((cat) => (
-            <CategoriaChip
-              key={cat}
-              label={cat}
-              ativo={cat === 'Todas' ? categoriasAtivas.size === 0 : categoriasAtivas.has(cat)}
-              onPress={() => toggleCategoria(cat)}
+        <View className="flex-row items-center gap-2">
+          <View className="flex-1">
+            <TextInput
+              placeholder="Buscar receitas..."
+              placeholderTextColor="#8C7B6B"
+              value={busca}
+              onChangeText={setBusca}
+              style={{ height: 46, textAlignVertical: 'center' }}
+              className="bg-surface border border-border rounded-card px-3.5 py-0 font-sans text-[15px] text-text"
             />
-          ))}
-        </ScrollView>
+          </View>
+          <Pressable
+            onPress={() => setFiltrosAbertos(true)}
+            style={{ width: 46, height: 46 }}
+            className={`rounded-card border items-center justify-center ${
+              filtrosAtivos > 0 ? 'bg-primary border-primary' : 'bg-surface border-border'
+            }`}
+          >
+            <Funnel size={18} color={filtrosAtivos > 0 ? 'white' : '#8C7B6B'} />
+            {filtrosAtivos > 0 && (
+              <View
+                style={{ top: -5, right: -5, width: 20, height: 20 }}
+                className="absolute rounded-full bg-accent items-center justify-center"
+              >
+                <AppText
+                  numberOfLines={1}
+                  style={{ lineHeight: 20, textAlign: 'center' }}
+                  className="text-white text-[10px] font-sans-bold"
+                >
+                  {filtrosAtivos}
+                </AppText>
+              </View>
+            )}
+          </Pressable>
+        </View>
       </View>
+
+      <Modal
+        visible={filtrosAbertos}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFiltrosAbertos(false)}
+      >
+        <View className="flex-1 bg-black/35 justify-end">
+          <Pressable className="flex-1" onPress={() => setFiltrosAbertos(false)} />
+          <View className="bg-background rounded-t-2xl px-4 pt-4 pb-6 gap-5">
+            <View className="flex-row items-center justify-between">
+              <View>
+                <AppText variant="heading">Filtros</AppText>
+                <AppText variant="muted" className="text-[12px]">
+                  Refine seu acervo de receitas
+                </AppText>
+              </View>
+              <Pressable
+                onPress={() => setFiltrosAbertos(false)}
+                className="w-10 h-10 rounded-full bg-surface items-center justify-center"
+              >
+                <X size={18} color="#2C1810" />
+              </Pressable>
+            </View>
+
+            <View className="gap-2">
+              <AppText variant="muted" className="text-[11px] uppercase">Categorias</AppText>
+              <View className="flex-row flex-wrap gap-2">
+                {CATEGORIAS.map((cat) => (
+                  <FilterOption
+                    key={cat}
+                    label={cat}
+                    ativo={cat === 'Todas' ? categoriasAtivas.size === 0 : categoriasAtivas.has(cat)}
+                    onPress={() => toggleCategoria(cat)}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View className="gap-2">
+              <AppText variant="muted" className="text-[11px] uppercase">Tempo</AppText>
+              <View className="flex-row flex-wrap gap-2">
+                {[{ label: 'até 15 min', valor: 15 }, { label: 'até 30 min', valor: 30 }, { label: 'até 1h', valor: 60 }].map((t) => (
+                  <FilterOption
+                    key={t.valor}
+                    label={t.label}
+                    ativo={filtroTempo === t.valor}
+                    onPress={() => setFiltroTempo(filtroTempo === t.valor ? null : t.valor)}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View className="gap-2">
+              <AppText variant="muted" className="text-[11px] uppercase">Dificuldade</AppText>
+              <View className="flex-row flex-wrap gap-2">
+                {(['Fácil', 'Médio', 'Difícil'] as const).map((d) => (
+                  <FilterOption
+                    key={d}
+                    label={d}
+                    ativo={filtroDificuldade === d}
+                    onPress={() => setFiltroDificuldade(filtroDificuldade === d ? null : d)}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={limparFiltros}
+                className="flex-1 h-12 rounded-xl border border-border bg-surface items-center justify-center"
+              >
+                <AppText className="font-sans-medium text-text">Limpar</AppText>
+              </Pressable>
+              <Pressable
+                onPress={() => setFiltrosAbertos(false)}
+                className="flex-1 h-12 rounded-xl bg-primary items-center justify-center"
+              >
+                <AppText className="font-sans-bold text-white">Aplicar</AppText>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {receitasFiltradas.length === 0 ? (
         <View className="flex-1 items-center justify-center gap-2">

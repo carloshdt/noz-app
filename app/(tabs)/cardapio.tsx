@@ -2,8 +2,8 @@ import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useLayoutEffect, useMemo, useCallback } from 'react';
 import { useNavigation, useFocusEffect } from 'expo-router';
-import { Plus, X, Minus } from 'lucide-react-native';
-import { Receita, PeriodoPlanejamento, DiaPorcao } from '../../types';
+import { Plus, X, Minus, Pencil } from 'lucide-react-native';
+import { Receita, PlanoReceita, PeriodoPlanejamento, DiaPorcao } from '../../types';
 import { useCardapio } from '../../hooks/useCardapio';
 import { useConfiguracao } from '../../hooks/useConfiguracao';
 import { useReceitas } from '../../hooks/useReceitas';
@@ -37,7 +37,7 @@ type Etapa = 'receitas' | 'batches' | 'dias';
 
 export default function CardapioScreen() {
   const navigation = useNavigation();
-  const { plano, adicionarReceita, removerReceita, limpar } = useCardapio();
+  const { plano, adicionarReceita, editarDiasReceita, removerReceita, limpar } = useCardapio();
   const { periodo, diaInicio, recarregar } = useConfiguracao();
   const { receitas } = useReceitas();
 
@@ -48,6 +48,8 @@ export default function CardapioScreen() {
   const [batches, setBatches] = useState(1);
   const [diasSelecionados, setDiasSelecionados] = useState<DiaPorcao[]>([]);
   const [etapa, setEtapa] = useState<Etapa>('receitas');
+  const [editandoTipo, setEditandoTipo] = useState<'comDias' | 'semDias' | null>(null);
+  const [editandoReceitaId, setEditandoReceitaId] = useState<string | null>(null);
 
   const datas = useMemo(() => obterDatasDoPerio(periodo, diaInicio), [periodo, diaInicio]);
 
@@ -72,6 +74,23 @@ export default function CardapioScreen() {
   function fecharModal() {
     setModalAberto(false);
     setReceitaSelecionada(null);
+    setEditandoTipo(null);
+    setEditandoReceitaId(null);
+  }
+
+  function editarReceita(pr: PlanoReceita, r: Receita, tipo: 'comDias' | 'semDias') {
+    setReceitaSelecionada(r);
+    setEditandoTipo(tipo);
+    setEditandoReceitaId(pr.receitaId);
+    if (tipo === 'comDias') {
+      setBatches(pr.batches || 1);
+      setDiasSelecionados(pr.dias ?? []);
+    } else {
+      setBatches(pr.batchesSemDias ?? 1);
+      setDiasSelecionados([]);
+    }
+    setEtapa('batches');
+    setModalAberto(true);
   }
 
   function selecionarReceita(r: Receita) {
@@ -83,7 +102,11 @@ export default function CardapioScreen() {
 
   function confirmarBatches(semDia: boolean) {
     if (semDia) {
-      adicionarReceita(receitaSelecionada!.id, batches, undefined);
+      if (editandoTipo) {
+        editarDiasReceita(editandoReceitaId!, batches, undefined, editandoTipo);
+      } else {
+        adicionarReceita(receitaSelecionada!.id, batches, undefined);
+      }
       fecharModal();
     } else {
       setEtapa('dias');
@@ -110,7 +133,12 @@ export default function CardapioScreen() {
   }
 
   function confirmarDias() {
-    adicionarReceita(receitaSelecionada!.id, batches, diasSelecionados.length > 0 ? diasSelecionados : undefined);
+    const dias = diasSelecionados.length > 0 ? diasSelecionados : undefined;
+    if (editandoTipo) {
+      editarDiasReceita(editandoReceitaId!, batches, dias, editandoTipo);
+    } else {
+      adicionarReceita(receitaSelecionada!.id, batches, dias);
+    }
     fecharModal();
   }
 
@@ -157,6 +185,9 @@ export default function CardapioScreen() {
                           {pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')}
                         </AppText>
                       </View>
+                      <Pressable onPress={() => editarReceita(pr, r, 'comDias')} className="p-1">
+                        <Pencil size={15} color="#8C7B6B" />
+                      </Pressable>
                       <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
                         <X size={16} color="#8C7B6B" />
                       </Pressable>
@@ -172,6 +203,9 @@ export default function CardapioScreen() {
                           {`Sem dias definidos · ${pr.batchesSemDias! * r.porcoes} porções`}
                         </AppText>
                       </View>
+                      <Pressable onPress={() => editarReceita(pr, r, 'semDias')} className="p-1">
+                        <Pencil size={15} color="#8C7B6B" />
+                      </Pressable>
                       <Pressable onPress={() => removerReceita(pr.receitaId)} className="p-1">
                         <X size={16} color="#8C7B6B" />
                       </Pressable>

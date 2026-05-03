@@ -74,6 +74,19 @@ export function useCardapio() {
     });
   }, [STORAGE_KEY]);
 
+  const editarDiasReceita = useCallback((receitaId: string, batches: number, dias: DiaPorcao[] | undefined, tipo: 'comDias' | 'semDias') => {
+    setPlano((prev) => {
+      const receitas = prev.receitas.map((r) => {
+        if (r.receitaId !== receitaId) return r;
+        if (tipo === 'semDias') return { ...r, batchesSemDias: batches };
+        return { ...r, batches, dias };
+      });
+      const novo = { ...prev, receitas };
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      return novo;
+    });
+  }, [STORAGE_KEY]);
+
   const atribuirDias = useCallback((receitaId: string, dias: DiaPorcao[]) => {
     setPlano((prev) => {
       const receitas = prev.receitas.map((r) =>
@@ -122,5 +135,5 @@ export function useCardapio() {
     return Array.from(mapa.values());
   }, [plano]);
 
-  return { plano, adicionarReceita, atribuirDias, removerReceita, limpar, gerarListaCompras, recarregar };
+  return { plano, adicionarReceita, editarDiasReceita, atribuirDias, removerReceita, limpar, gerarListaCompras, recarregar };
 }

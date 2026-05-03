@@ -40,9 +40,6 @@ export function ReceitaCard({ receita, onPress, criadorNome }: Props) {
           </AppText>
         ) : null}
       </View>
-      <View style={{ position: 'absolute', top: 8, right: 8 }}>
-        <Badge label={receita.dificuldade} variant={receita.dificuldade === 'Fácil' ? 'accent' : 'default'} />
-      </View>
     </Pressable>
   );
 }
