@@ -117,7 +117,7 @@ export function useReceitas() {
         porcoes: receita.porcoes,
         dificuldade: receita.dificuldade,
         instrucoes: instrucoesSyncadas,
-        publica: receita.publica ?? false,
+        publica: receita.publica ?? true,
         atualizada_em: receita.atualizadaEm ?? new Date().toISOString(),
       });
 

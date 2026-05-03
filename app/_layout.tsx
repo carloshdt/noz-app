@@ -33,6 +33,7 @@ function RootNavigator() {
       <Stack.Screen name="receita/[id]/editar" options={{ presentation: 'modal' }} />
       <Stack.Screen name="perfil/editar" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="planejamento/index" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="perfil/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }

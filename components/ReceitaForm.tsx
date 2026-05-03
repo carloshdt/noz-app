@@ -30,6 +30,7 @@ const formVazio = (): FormData => ({
   dificuldade: 'Fácil',
   ingredientes: [],
   instrucoes: [],
+  publica: true,
 });
 
 export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
@@ -119,6 +120,10 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
   function salvar() {
     if (!form.nome.trim()) {
       Alert.alert('Atenção', 'Dê um nome para a receita antes de salvar.');
+      return;
+    }
+    if (!form.porcoes || form.porcoes < 1) {
+      Alert.alert('Atenção', 'Informe quantas porções a receita rende (mínimo 1).');
       return;
     }
     const dadosFinais = novaInst.trim()
@@ -317,7 +322,51 @@ export function ReceitaForm({ inicial, onSalvar, titulo }: Props) {
           </View>
         </View>
 
-        <View className="pb-8">
+        <View className="pb-8 gap-3">
+          <Pressable
+            onPress={() => setForm((f) => ({ ...f, publica: !(f.publica !== false) }))}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingVertical: 14,
+              paddingHorizontal: 16,
+              backgroundColor: form.publica !== false ? '#F0FDF4' : '#F5F5F5',
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: form.publica !== false ? '#86EFAC' : '#E5E7EB',
+            }}
+          >
+            <View>
+              <AppText style={{ fontWeight: '500', color: form.publica !== false ? '#166534' : '#6B7280' }}>
+                {form.publica !== false ? 'Pública — aparece no Feed' : 'Privada — só você vê'}
+              </AppText>
+              <AppText variant="muted" style={{ fontSize: 12, marginTop: 2 }}>
+                Toque para {form.publica !== false ? 'tornar privada' : 'publicar'}
+              </AppText>
+            </View>
+            <View
+              style={{
+                width: 44,
+                height: 24,
+                borderRadius: 12,
+                backgroundColor: form.publica !== false ? '#86EFAC' : '#D1D5DB',
+                justifyContent: 'center',
+                paddingHorizontal: 2,
+              }}
+            >
+              <View
+                style={{
+                  width: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  backgroundColor: 'white',
+                  alignSelf: form.publica !== false ? 'flex-end' : 'flex-start',
+                  elevation: 2,
+                }}
+              />
+            </View>
+          </Pressable>
           <Button label="Salvar receita" onPress={salvar} fullWidth />
         </View>
       </ScrollView>

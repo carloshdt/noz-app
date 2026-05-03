@@ -1,7 +1,7 @@
 import { View, Pressable } from 'react-native';
 import { Tabs, usePathname } from 'expo-router';
 import { useState, useEffect } from 'react';
-import { Menu, UtensilsCrossed, CalendarDays, ShoppingCart } from 'lucide-react-native';
+import { Menu, UtensilsCrossed, Rss, CalendarDays, ShoppingCart } from 'lucide-react-native';
 import { Drawer } from '../../components/Drawer';
 import { useAuth } from '../../hooks/useAuth';
 import { useProfile } from '../../hooks/useProfile';
@@ -55,6 +55,13 @@ export default function TabLayout() {
           options={{
             title: 'Receitas',
             tabBarIcon: ({ color }) => <UtensilsCrossed size={22} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            tabBarIcon: ({ color }) => <Rss size={22} color={color} />,
           }}
         />
         <Tabs.Screen
