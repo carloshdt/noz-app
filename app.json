@@ -3,7 +3,7 @@
     "name": "recipe-app",
     "slug": "recipe-app",
     "version": "1.0.0",
-    "scheme": "recipe-app",
+    "scheme": "noz",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -29,7 +29,15 @@
       "output": "static"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app precisa acessar suas fotos para você escolher uma foto de perfil.",
+          "cameraPermission": "O app precisa acessar sua câmera para você tirar uma foto de perfil."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

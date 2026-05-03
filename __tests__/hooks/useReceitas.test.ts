@@ -5,15 +5,17 @@ import { useReceitas } from '../../hooks/useReceitas';
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
+jest.mock('../../lib/supabase');
+jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }));
 
 const receitaBase = {
   nome: 'Frango Grelhado',
-  categoria: 'Carnes',
+  categorias: ['Carnes'],
   tempoPreparo: 20,
   porcoes: 4,
   dificuldade: 'Fácil' as const,
   ingredientes: [{ nome: 'Frango', quantidade: 500, unidade: 'g' }],
-  instrucoes: ['Grelhar o frango por 20 minutos'],
+  instrucoes: [{ texto: 'Grelhar o frango por 20 minutos' }],
 };
 
 describe('useReceitas', () => {
@@ -58,7 +60,7 @@ describe('useReceitas', () => {
     await act(async () => {});
     await act(async () => {
       result.current.adicionar(receitaBase);
-      result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categoria: 'Massas' });
+      result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categorias: ['Massas'] });
     });
     const encontradas = result.current.buscar('frango');
     expect(encontradas).toHaveLength(1);

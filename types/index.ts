@@ -1,6 +1,12 @@
 export type Dificuldade = 'Fácil' | 'Médio' | 'Difícil';
 
+export type Instrucao = {
+  texto: string;
+  imagem?: string;
+};
+
 export type Ingrediente = {
+  id?: string;
   nome: string;
   quantidade: number;
   unidade: string;
@@ -8,25 +14,72 @@ export type Ingrediente = {
 
 export type Receita = {
   id: string;
+  user_id?: string;
   nome: string;
-  categoria: string;
+  categorias: string[];
   imagem?: string;
   tempoPreparo: number;
   porcoes: number;
   dificuldade: Dificuldade;
   ingredientes: Ingrediente[];
-  instrucoes: string[];
+  instrucoes: Instrucao[];
+  publica?: boolean;
   criadaEm: string;
+  atualizadaEm?: string;
+  fonte_receita_id?: string;
+  fonte_atualizada_em?: string;
+  _pendingSync?: boolean;
 };
 
-export type CardapioDia = {
-  diaSemana: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  receitaId: string | null;
+export type Criador = {
+  id: string;
+  nome: string;
+  foto_url?: string;
+  total_importacoes: number;
+};
+
+export type ReceitaFeed = {
+  id: string;
+  user_id: string;
+  nome: string;
+  categorias: string[];
+  imagem?: string;
+  tempoPreparo: number;
+  porcoes: number;
+  dificuldade: Dificuldade;
+  criadaEm: string;
+  criador: Criador;
+};
+
+export type Profile = {
+  id: string;
+  nome: string;
+  foto_url?: string;
+  criado_em: string;
+  total_importacoes?: number;
+};
+
+export type PeriodoPlanejamento = 'semanal' | 'quinzenal' | 'mensal';
+
+export type DiaPorcao = {
+  dia: number;
+  porcoes: number;
+};
+
+export type PlanoReceita = {
+  receitaId: string;
+  batches: number;
+  dias?: DiaPorcao[];
+};
+
+export type Plano = {
+  periodo: PeriodoPlanejamento;
+  receitas: PlanoReceita[];
 };
 
 export type ItemCompra = {
   nome: string;
   quantidade: number;
   unidade: string;
-  categoria: string;
+  receitas: string[];
 };
