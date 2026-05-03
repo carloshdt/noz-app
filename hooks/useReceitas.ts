@@ -55,41 +55,46 @@ export function useReceitas() {
 
       const cacheMap = new Map(cache.map((r) => [r.id, r]));
 
-      const mapeadas: Receita[] = (receitasData ?? []).map((r) => {
-        const supabaseIngredientes = (r.ingredientes ?? []).map((i: any) => ({
+      const mapeadas: Receita[] = (receitasData ?? []).map((r) => ({
+        id: r.id,
+        user_id: r.user_id,
+        nome: r.nome,
+        categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
+        imagem: r.imagem,
+        tempoPreparo: r.tempo_preparo,
+        porcoes: r.porcoes,
+        dificuldade: r.dificuldade,
+        ingredientes: (r.ingredientes ?? []).map((i: any) => ({
           id: i.id,
           nome: i.nome,
           quantidade: parseFloat(i.quantidade),
           unidade: i.unidade,
-        }));
-        const cachedIngredientes = cacheMap.get(r.id)?.ingredientes ?? [];
-        // Supabase returned empty but local cache has data — preserve and re-sync
-        const ingredientes = supabaseIngredientes.length > 0 ? supabaseIngredientes : cachedIngredientes;
-        if (supabaseIngredientes.length === 0 && cachedIngredientes.length > 0) {
-          const toSync: Receita = { ...cacheMap.get(r.id)!, id: r.id };
-          _syncReceita(toSync, user.id);
-        }
-        return {
-          id: r.id,
-          user_id: r.user_id,
-          nome: r.nome,
-          categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
-          imagem: r.imagem,
-          tempoPreparo: r.tempo_preparo,
-          porcoes: r.porcoes,
-          dificuldade: r.dificuldade,
-          ingredientes,
-          instrucoes: (r.instrucoes ?? []).map((inst: any) =>
-            typeof inst === 'string' ? { texto: inst } : inst
-          ),
-          publica: r.publica,
-          criadaEm: r.criada_em,
-          atualizadaEm: r.atualizada_em,
-        };
-      });
+        })),
+        instrucoes: (r.instrucoes ?? []).map((inst: any) =>
+          typeof inst === 'string' ? { texto: inst } : inst
+        ),
+        publica: r.publica,
+        criadaEm: r.criada_em,
+        atualizadaEm: r.atualizada_em,
+      }));
 
-      setReceitas(mapeadas);
-      await setCache(mapeadas);
+      // Merge Supabase data with in-memory/cache ingredients to handle race condition
+      // where _syncReceita hasn't finished when carregarReceitas fires
+      setReceitas((current) => {
+        const currentMap = new Map(current.map((r) => [r.id, r]));
+        const merged = mapeadas.map((r) => {
+          if (r.ingredientes.length > 0) return r;
+          const localIngredientes =
+            currentMap.get(r.id)?.ingredientes ?? cacheMap.get(r.id)?.ingredientes ?? [];
+          if (localIngredientes.length > 0) {
+            _syncReceita({ ...r, ingredientes: localIngredientes }, user.id);
+            return { ...r, ingredientes: localIngredientes };
+          }
+          return r;
+        });
+        setCache(merged);
+        return merged;
+      });
 
       // Sync pending offline changes
       const pendentes = cache.filter((r) => r._pendingSync);
