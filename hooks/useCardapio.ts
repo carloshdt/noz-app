@@ -49,7 +49,7 @@ export function useCardapio() {
     setPlano((prev) => {
       const existe = prev.receitas.find((r) => r.receitaId === receitaId);
       const receitas = existe
-        ? prev.receitas.map((r) => r.receitaId === receitaId ? { ...r, batches, dias } : r)
+        ? prev.receitas.map((r) => r.receitaId === receitaId ? { ...r, batches, dias: dias !== undefined ? dias : r.dias } : r)
         : [...prev.receitas, { receitaId, batches, dias }];
       const novo = { ...prev, receitas };
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
