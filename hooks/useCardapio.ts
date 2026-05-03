@@ -49,7 +49,19 @@ export function useCardapio() {
     setPlano((prev) => {
       const existe = prev.receitas.find((r) => r.receitaId === receitaId);
       const receitas = existe
-        ? prev.receitas.map((r) => r.receitaId === receitaId ? { ...r, batches, dias: dias !== undefined ? dias : r.dias } : r)
+        ? prev.receitas.map((r) => {
+            if (r.receitaId !== receitaId) return r;
+            if (!dias || dias.length === 0) return { ...r, batches: r.batches + batches };
+            // Merge new dias with existing, accumulate porcoes for same day
+            const existing = r.dias ?? [];
+            const merged = [...existing];
+            dias.forEach((nd) => {
+              const idx = merged.findIndex((d) => d.dia === nd.dia);
+              if (idx >= 0) merged[idx] = { ...merged[idx], porcoes: merged[idx].porcoes + nd.porcoes };
+              else merged.push(nd);
+            });
+            return { ...r, batches: r.batches + batches, dias: merged };
+          })
         : [...prev.receitas, { receitaId, batches, dias }];
       const novo = { ...prev, receitas };
       AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
