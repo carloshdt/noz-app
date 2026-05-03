@@ -1,10 +1,10 @@
-import { View, ScrollView, Image, Pressable, Alert } from 'react-native';
+import { View, ScrollView, Image, Pressable, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Clock, Users, ChefHat, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, Clock, Users, ChefHat, MoreVertical, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react-native';
 import { useReceitas } from '../../../hooks/useReceitas';
 import { usePublicar } from '../../../hooks/usePublicar';
 import { AppText } from '../../../components/ui/AppText';
@@ -20,6 +20,7 @@ export default function ReceitaDetalhesScreen() {
   const { togglePublicar } = usePublicar();
   const receita = receitas.find((r) => r.id === id);
   const [originalAtualizada, setOriginalAtualizada] = useState(false);
+  const [menuAberto, setMenuAberto] = useState(false);
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
 
@@ -46,13 +47,15 @@ export default function ReceitaDetalhesScreen() {
     );
   }
 
+  const publica = receita.publica !== false;
+
   async function handleTogglePublicar() {
-    const publicaAtual = receita!.publica !== false;
-    const ok = await togglePublicar(receita!.id, publicaAtual);
-    if (ok) editar(receita!.id, { publica: !publicaAtual });
+    const ok = await togglePublicar(receita!.id, publica);
+    if (ok) editar(receita!.id, { publica: !publica });
   }
 
   function confirmarRemocao() {
+    setMenuAberto(false);
     Alert.alert('Remover receita', `Deseja remover "${receita!.nome}"?`, [
       { text: 'Cancelar', style: 'cancel' },
       {
@@ -62,8 +65,6 @@ export default function ReceitaDetalhesScreen() {
       },
     ]);
   }
-
-  const publica = receita.publica !== false;
 
   return (
     <View className="flex-1 bg-background">
@@ -84,17 +85,11 @@ export default function ReceitaDetalhesScreen() {
           </LinearGradient>
         </View>
 
-        <View className="px-4 py-6 gap-6">
+        <View className="px-4 py-6 gap-6 pb-12">
           {originalAtualizada && (
             <Pressable
               onPress={() => router.push(`/receita/${receita.fonte_receita_id}` as any)}
-              style={{
-                backgroundColor: '#FEF3C7',
-                borderRadius: 8,
-                padding: 12,
-                borderWidth: 1,
-                borderColor: '#F59E0B',
-              }}
+              style={{ backgroundColor: '#FEF3C7', borderRadius: 8, padding: 12, borderWidth: 1, borderColor: '#F59E0B' }}
             >
               <AppText style={{ fontSize: 13, color: '#92400E' }}>
                 Original atualizada · toque para ver
@@ -137,44 +132,94 @@ export default function ReceitaDetalhesScreen() {
               <InstrucaoItem key={i} numero={i + 1} instrucao={inst} />
             ))}
           </View>
-
-          <View className="gap-3 pb-8">
-            <Pressable
-              onPress={handleTogglePublicar}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 8,
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                backgroundColor: publica ? '#F0FDF4' : '#F5F5F5',
-                borderRadius: 8,
-                borderWidth: 1,
-                borderColor: publica ? '#86EFAC' : '#E5E7EB',
-              }}
-            >
-              {publica ? <Eye size={18} color="#166534" /> : <EyeOff size={18} color="#6B7280" />}
-              <AppText style={{ flex: 1, color: publica ? '#166534' : '#6B7280', fontWeight: '500' }}>
-                {publica ? 'Pública — visível no Feed' : 'Privada — só você vê'}
-              </AppText>
-              <AppText style={{ fontSize: 12, color: publica ? '#166534' : '#6B7280' }}>
-                {publica ? 'Tornar privada' : 'Tornar pública'}
-              </AppText>
-            </Pressable>
-
-            <Button label="Editar receita" variant="secondary" onPress={() => router.push(`/receita/${id}/editar`)} />
-            <Button label="Remover receita" variant="ghost" onPress={confirmarRemocao} />
-          </View>
         </View>
       </ScrollView>
 
+      {/* Header */}
       <SafeAreaView className="absolute top-0 left-0 right-0">
         <View className="flex-row justify-between px-4 pt-2">
           <Pressable onPress={() => router.back()} className="bg-black/30 rounded-full p-2">
             <ArrowLeft size={20} color="white" />
           </Pressable>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <Pressable onPress={handleTogglePublicar} className="bg-black/30 rounded-full p-2">
+              {publica ? <Eye size={20} color="white" /> : <EyeOff size={20} color="white" />}
+            </Pressable>
+            <Pressable onPress={() => setMenuAberto(true)} className="bg-black/30 rounded-full p-2">
+              <MoreVertical size={20} color="white" />
+            </Pressable>
+          </View>
         </View>
       </SafeAreaView>
+
+      {/* Bottom sheet menu */}
+      <Modal visible={menuAberto} transparent animationType="slide" onRequestClose={() => setMenuAberto(false)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+          onPress={() => setMenuAberto(false)}
+        >
+          <Pressable onPress={() => {}}>
+            <View style={{ backgroundColor: 'white', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 8, paddingBottom: 32 }}>
+              {/* Handle */}
+              <View style={{ width: 36, height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, alignSelf: 'center', marginBottom: 16 }} />
+
+              {/* Título */}
+              <AppText variant="muted" style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: 1, paddingHorizontal: 20, marginBottom: 8 }}>
+                {receita.nome}
+              </AppText>
+
+              {/* Editar */}
+              <Pressable
+                onPress={() => { setMenuAberto(false); router.push(`/receita/${id}/editar`); }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 16 }}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F5F0EB', alignItems: 'center', justifyContent: 'center' }}>
+                  <Pencil size={18} color="#8B4513" />
+                </View>
+                <View>
+                  <AppText style={{ fontWeight: '600' }}>Editar receita</AppText>
+                  <AppText variant="muted" style={{ fontSize: 12 }}>Alterar ingredientes, modo de preparo...</AppText>
+                </View>
+              </Pressable>
+
+              {/* Toggle público */}
+              <Pressable
+                onPress={handleTogglePublicar}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 16 }}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: publica ? '#F0FDF4' : '#F5F5F5', alignItems: 'center', justifyContent: 'center' }}>
+                  {publica ? <Eye size={18} color="#166534" /> : <EyeOff size={18} color="#6B7280" />}
+                </View>
+                <View>
+                  <AppText style={{ fontWeight: '600', color: publica ? '#166534' : '#374151' }}>
+                    {publica ? 'Pública' : 'Privada'}
+                  </AppText>
+                  <AppText variant="muted" style={{ fontSize: 12 }}>
+                    {publica ? 'Toque para tornar privada' : 'Toque para tornar pública'}
+                  </AppText>
+                </View>
+              </Pressable>
+
+              {/* Divisor */}
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 20, marginVertical: 4 }} />
+
+              {/* Remover */}
+              <Pressable
+                onPress={confirmarRemocao}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 16 }}
+              >
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center' }}>
+                  <Trash2 size={18} color="#DC2626" />
+                </View>
+                <View>
+                  <AppText style={{ fontWeight: '600', color: '#DC2626' }}>Remover receita</AppText>
+                  <AppText variant="muted" style={{ fontSize: 12 }}>Esta ação não pode ser desfeita</AppText>
+                </View>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

@@ -1,5 +1,5 @@
-import { View, Image, Pressable } from 'react-native';
-import { Clock, Users } from 'lucide-react-native';
+import { View, Image, Pressable, Alert } from 'react-native';
+import { Clock, Users, Bookmark, Check, Plus } from 'lucide-react-native';
 import { ReceitaFeed } from '../types';
 import { AppText } from './ui/AppText';
 import { Badge } from './ui/Badge';
@@ -8,11 +8,12 @@ type Props = {
   receita: ReceitaFeed;
   altura: number;
   onSalvar: () => void;
+  onRemover: () => void;
   onVerPerfil: (userId: string) => void;
   salvada: boolean;
 };
 
-export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Props) {
+export function FeedCard({ receita, altura, onSalvar, onRemover, onVerPerfil, salvada }: Props) {
   const iniciais = receita.criador.nome
     .trim()
     .split(' ')
@@ -21,10 +22,25 @@ export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Pr
     .join('')
     .toUpperCase();
 
+  function handleBookmark() {
+    if (salvada) {
+      Alert.alert(
+        'Remover receita',
+        `Remover "${receita.nome}" das suas receitas?`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Remover', style: 'destructive', onPress: onRemover },
+        ]
+      );
+    } else {
+      onSalvar();
+    }
+  }
+
   return (
     <View style={{ height: altura }}>
       {/* Imagem: ~60% superior */}
-      <View style={{ flex: 6, backgroundColor: '#E8DDD4', position: 'relative' }}>
+      <View style={{ flex: 6, backgroundColor: '#E8DDD4' }}>
         {receita.imagem ? (
           <Image
             source={{ uri: receita.imagem }}
@@ -52,14 +68,14 @@ export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Pr
           {receita.criador.foto_url ? (
             <Image
               source={{ uri: receita.criador.foto_url }}
-              style={{ width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: 'white' }}
+              style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: 'white' }}
             />
           ) : (
             <View
               style={{
-                width: 28,
-                height: 28,
-                borderRadius: 14,
+                width: 36,
+                height: 36,
+                borderRadius: 18,
                 backgroundColor: '#8B4513',
                 borderWidth: 2,
                 borderColor: 'white',
@@ -67,12 +83,12 @@ export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Pr
                 justifyContent: 'center',
               }}
             >
-              <AppText style={{ fontSize: 10, color: 'white', fontWeight: '700' }}>{iniciais}</AppText>
+              <AppText style={{ fontSize: 12, color: 'white', fontWeight: '700' }}>{iniciais}</AppText>
             </View>
           )}
           <AppText
             style={{
-              fontSize: 13,
+              fontSize: 15,
               color: 'white',
               fontWeight: '600',
               textShadowColor: 'rgba(0,0,0,0.6)',
@@ -82,6 +98,24 @@ export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Pr
           >
             {receita.criador.nome}
           </AppText>
+        </Pressable>
+
+        {/* Bookmark — topo direito, saindo para baixo da borda superior */}
+        <Pressable
+          onPress={handleBookmark}
+          style={{ position: 'absolute', top: -6, right: 8 }}
+        >
+          <Bookmark
+            size={52}
+            color="#8B4513"
+            fill="#8B4513"
+          />
+          <View style={{ position: 'absolute', top: 14, left: 0, width: 52, alignItems: 'center' }}>
+            {salvada
+              ? <Check size={20} color="white" strokeWidth={3.5} />
+              : <Plus size={20} color="white" strokeWidth={3.5} />
+            }
+          </View>
         </Pressable>
       </View>
 
@@ -109,27 +143,6 @@ export function FeedCard({ receita, altura, onSalvar, onVerPerfil, salvada }: Pr
             variant={receita.dificuldade === 'Fácil' ? 'accent' : 'default'}
           />
         </View>
-
-        <Pressable
-          onPress={salvada ? undefined : onSalvar}
-          style={{
-            backgroundColor: salvada ? '#E8DDD4' : '#8B4513',
-            borderRadius: 8,
-            paddingVertical: 14,
-            alignItems: 'center',
-            marginTop: 'auto' as any,
-          }}
-        >
-          <AppText
-            style={{
-              color: salvada ? '#8C7B6B' : 'white',
-              fontWeight: '600',
-              fontSize: 15,
-            }}
-          >
-            {salvada ? '✓ Salva nas suas receitas' : '+ Salvar nas minhas receitas'}
-          </AppText>
-        </Pressable>
       </View>
     </View>
   );

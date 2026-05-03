@@ -3,7 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 
 function gerarId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
 }
 
 export function useSalvarReceita() {
@@ -11,8 +14,8 @@ export function useSalvarReceita() {
   const [salvando, setSalvando] = useState(false);
 
   const salvar = useCallback(
-    async (receitaId: string, criadorId: string): Promise<boolean> => {
-      if (!user) return false;
+    async (receitaId: string, criadorId: string): Promise<string | null> => {
+      if (!user) return null;
       setSalvando(true);
 
       const { data: original, error: fetchError } = await supabase
@@ -23,7 +26,7 @@ export function useSalvarReceita() {
 
       if (fetchError || !original) {
         setSalvando(false);
-        return false;
+        return null;
       }
 
       const agora = new Date().toISOString();
@@ -62,10 +65,18 @@ export function useSalvarReceita() {
       }
 
       setSalvando(false);
-      return !insertError;
+      return insertError ? null : novoId;
     },
     [user]
   );
 
-  return { salvar, salvando };
+  const remover = useCallback(
+    async (copyId: string): Promise<void> => {
+      if (!user) return;
+      await supabase.from('receitas').delete().eq('id', copyId).eq('user_id', user.id);
+    },
+    [user]
+  );
+
+  return { salvar, remover, salvando };
 }

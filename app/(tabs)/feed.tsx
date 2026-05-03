@@ -9,16 +9,26 @@ import { AppText } from '../../components/ui/AppText';
 
 export default function FeedScreen() {
   const { receitas, loading, temMais, recarregar, carregarMais } = useFeed();
-  const { salvar, salvando } = useSalvarReceita();
+  const { salvar, remover, salvando } = useSalvarReceita();
   const [itemHeight, setItemHeight] = useState(0);
-  const [salvas, setSalvas] = useState<Set<string>>(new Set());
+  const [salvas, setSalvas] = useState<Map<string, string>>(new Map());
 
   useFocusEffect(useCallback(() => { recarregar(); }, []));
 
   async function handleSalvar(receitaId: string, criadorId: string) {
     if (salvando || salvas.has(receitaId)) return;
-    const ok = await salvar(receitaId, criadorId);
-    if (ok) setSalvas((prev) => new Set(prev).add(receitaId));
+    const copyId = await salvar(receitaId, criadorId);
+    if (copyId) setSalvas((prev) => new Map(prev).set(receitaId, copyId));
+  }
+
+  async function handleRemover(receitaId: string) {
+    const copyId = salvas.get(receitaId);
+    if (copyId) await remover(copyId);
+    setSalvas((prev) => {
+      const next = new Map(prev);
+      next.delete(receitaId);
+      return next;
+    });
   }
 
   return (
@@ -57,6 +67,7 @@ export default function FeedScreen() {
               receita={item}
               altura={itemHeight}
               onSalvar={() => handleSalvar(item.id, item.user_id)}
+              onRemover={() => handleRemover(item.id)}
               onVerPerfil={(userId) => router.push(`/perfil/${userId}` as any)}
               salvada={salvas.has(item.id)}
             />
