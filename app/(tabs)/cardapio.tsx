@@ -76,6 +76,11 @@ export default function CardapioScreen() {
 
   function selecionarReceita(r: Receita) {
     setReceitaSelecionada(r);
+    const jaNoPlano = plano.receitas.find((pr) => pr.receitaId === r.id);
+    if (jaNoPlano) {
+      setBatches(jaNoPlano.batches);
+      setDiasSelecionados(jaNoPlano.dias ?? []);
+    }
     setEtapa('batches');
   }
 
