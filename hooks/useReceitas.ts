@@ -2,17 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
-import { Ingrediente, Receita } from '../types';
+import { Receita } from '../types';
 import { uploadImagem, isLocalUri } from '../lib/uploadImagem';
 
-const CACHE_KEY = '@receitas_v2';
-
-function gerarId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
+const CACHE_KEY = '@receitas_v3';
 
 function normalizarReceita(r: any): Receita {
   return {
@@ -34,22 +27,6 @@ async function setCache(receitas: Receita[]) {
   await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(receitas));
 }
 
-async function carregarIngredientesDaReceita(receitaId: string): Promise<Ingrediente[]> {
-  const { data, error } = await supabase
-    .from('ingredientes')
-    .select('id, nome, quantidade, unidade')
-    .eq('receita_id', receitaId);
-
-  if (error || !data) return [];
-
-  return data.map((i: any) => ({
-    id: i.id,
-    nome: i.nome,
-    quantidade: parseFloat(i.quantidade),
-    unidade: i.unidade,
-  }));
-}
-
 export function useReceitas() {
   const { user } = useAuth();
   const [receitas, setReceitas] = useState<Receita[]>([]);
@@ -61,17 +38,32 @@ export function useReceitas() {
     if (!user) return;
 
     try {
-      const { data: receitasData, error } = await supabase
+      // Receitas próprias (criadas pelo usuário)
+      const { data: proprias, error: errProprias } = await supabase
         .from('receitas')
         .select('*, ingredientes(*)')
         .eq('user_id', user.id)
         .order('criada_em', { ascending: false });
 
-      if (error) throw error;
+      if (errProprias) throw errProprias;
 
-      const cacheMap = new Map(cache.map((r) => [r.id, r]));
+      // Overrides do usuário (receitas salvas de outros)
+      const { data: overrides, error: errOverrides } = await supabase
+        .from('recipe_overrides')
+        .select(`
+          *,
+          receita:recipe_id (
+            *,
+            ingredientes (*)
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('criado_em', { ascending: false });
 
-      const mapeadas: Receita[] = (receitasData ?? []).map((r) => ({
+      if (errOverrides) throw errOverrides;
+
+      // Mapear receitas próprias
+      const mapeadasProprias: Receita[] = (proprias ?? []).map((r) => ({
         id: r.id,
         user_id: r.user_id,
         nome: r.nome,
@@ -92,59 +84,43 @@ export function useReceitas() {
         publica: r.publica,
         criadaEm: r.criada_em,
         atualizadaEm: r.atualizada_em,
-        fonte_receita_id: r.fonte_receita_id,
-        fonte_atualizada_em: r.fonte_atualizada_em,
+        fonte_receita_id: undefined,
+        fonte_atualizada_em: undefined,
       }));
 
-      const comIngredientesRecuperados = await Promise.all(
-        mapeadas.map(async (r) => {
-          if (r.ingredientes.length > 0 || !r.fonte_receita_id) return r;
-
-          const ingredientes = await carregarIngredientesDaReceita(r.fonte_receita_id);
-          if (ingredientes.length === 0) return r;
-
-          await supabase.from('ingredientes').insert(
-            ingredientes.map((i) => ({
-              receita_id: r.id,
-              nome: i.nome,
-              quantidade: String(i.quantidade),
-              unidade: i.unidade,
-            }))
-          );
-
-          return { ...r, ingredientes };
-        })
-      );
-
-      // Merge Supabase data with in-memory/cache ingredients to handle race condition
-      // where _syncReceita hasn't finished when carregarReceitas fires.
-      // Functional update accesses current state without adding it as a dep.
-      setReceitas((current) => {
-        const currentMap = new Map(current.map((r) => [r.id, r]));
-        return comIngredientesRecuperados.map((r) => {
-          if (r.ingredientes.length > 0) return r;
-          return {
-            ...r,
-            ingredientes:
-              currentMap.get(r.id)?.ingredientes ??
-              cacheMap.get(r.id)?.ingredientes ??
-              [],
-          };
-        });
+      // Mesclar overrides com originais
+      const mapeadasSalvas: Receita[] = (overrides ?? []).map((o) => {
+        const original = o.receita;
+        const ingOverride = o.ingredientes as any[] | null;
+        return {
+          id: original.id,
+          user_id: original.user_id,
+          nome: o.nome ?? original.nome,
+          categorias: o.categorias ?? (Array.isArray(original.categorias) ? original.categorias : [original.categoria ?? 'Carnes']),
+          imagem: o.imagem ?? original.imagem,
+          tempoPreparo: o.tempo_preparo ?? original.tempo_preparo,
+          porcoes: o.porcoes ?? original.porcoes,
+          dificuldade: o.dificuldade ?? original.dificuldade,
+          ingredientes: (ingOverride ?? original.ingredientes ?? []).map((i: any) => ({
+            id: i.id,
+            nome: i.nome,
+            quantidade: typeof i.quantidade === 'string' ? parseFloat(i.quantidade) : i.quantidade,
+            unidade: i.unidade,
+          })),
+          instrucoes: (o.instrucoes ?? original.instrucoes ?? []).map((inst: any) =>
+            typeof inst === 'string' ? { texto: inst } : inst
+          ),
+          publica: original.publica,
+          criadaEm: o.criado_em,
+          atualizadaEm: o.atualizado_em,
+          fonte_receita_id: original.id,
+          fonte_atualizada_em: o.fonte_atualizada_em ?? original.atualizada_em,
+        };
       });
 
-      // Write cache and re-sync recipes that still have no ingredients in Supabase
-      const toResync: Receita[] = [];
-      const merged = comIngredientesRecuperados.map((r) => {
-        if (r.ingredientes.length > 0) return r;
-        const localIngredientes =
-          cacheMap.get(r.id)?.ingredientes ?? [];
-        if (localIngredientes.length > 0) toResync.push({ ...r, ingredientes: localIngredientes });
-        return { ...r, ingredientes: localIngredientes };
-      });
-      await setCache(merged);
-      for (const r of toResync) _syncReceita(r, user.id);
-
+      const todasReceitas = [...mapeadasProprias, ...mapeadasSalvas];
+      setReceitas(todasReceitas);
+      await setCache(todasReceitas);
     } catch {
       // offline: use existing cache
     }
@@ -204,9 +180,13 @@ export function useReceitas() {
   const adicionar = useCallback(
     async (dados: Omit<Receita, 'id' | 'criadaEm'>) => {
       const agora = new Date().toISOString();
+      const id = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+      });
       const nova: Receita = {
         ...dados,
-        id: gerarId(),
+        id,
         criadaEm: agora,
         atualizadaEm: agora,
         user_id: user?.id,
@@ -221,17 +201,25 @@ export function useReceitas() {
 
   const remover = useCallback(
     async (id: string) => {
+      const receita = receitas.find((r) => r.id === id);
       setReceitas((prev) => {
         const lista = prev.filter((r) => r.id !== id);
         setCache(lista);
         return lista;
       });
 
-      if (user) {
+      if (!user) return;
+
+      if (receita?.fonte_receita_id) {
+        await supabase
+          .from('recipe_overrides')
+          .delete()
+          .match({ user_id: user.id, recipe_id: id });
+      } else {
         await supabase.from('receitas').delete().eq('id', id).eq('user_id', user.id);
       }
     },
-    [user]
+    [user, receitas]
   );
 
   const editar = useCallback(
@@ -242,7 +230,34 @@ export function useReceitas() {
       );
       setReceitas(lista);
       await setCache(lista);
-      if (user) {
+
+      if (!user) return;
+
+      const receita = receitas.find((r) => r.id === id);
+      if (receita?.fonte_receita_id) {
+        await supabase.from('recipe_overrides').upsert(
+          {
+            user_id: user.id,
+            recipe_id: id,
+            nome: dados.nome,
+            categorias: dados.categorias,
+            imagem: dados.imagem,
+            tempo_preparo: dados.tempoPreparo,
+            porcoes: dados.porcoes,
+            dificuldade: dados.dificuldade,
+            ingredientes: dados.ingredientes
+              ? dados.ingredientes.map((i) => ({
+                  nome: i.nome,
+                  quantidade: String(i.quantidade),
+                  unidade: i.unidade,
+                }))
+              : undefined,
+            instrucoes: dados.instrucoes,
+            atualizado_em: agora,
+          },
+          { onConflict: 'user_id,recipe_id' }
+        );
+      } else {
         const atualizada = lista.find((r) => r.id === id);
         if (atualizada) _syncReceita(atualizada, user.id);
       }
