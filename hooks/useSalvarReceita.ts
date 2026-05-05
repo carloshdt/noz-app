@@ -4,14 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
 import { Receita } from '../types';
 
-const CACHE_KEY = '@receitas_v2';
-
-function gerarId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
-  });
-}
+const CACHE_KEY = '@receitas_v3';
 
 async function adicionarAoCache(receita: Receita) {
   const json = await AsyncStorage.getItem(CACHE_KEY);
@@ -41,74 +34,62 @@ export function useSalvarReceita() {
       }
 
       const agora = new Date().toISOString();
-      const novoId = gerarId();
 
-      const { error: insertError } = await supabase.from('receitas').insert({
-        id: novoId,
-        user_id: user.id,
+      const { error: overrideError } = await supabase
+        .from('recipe_overrides')
+        .insert({
+          user_id: user.id,
+          recipe_id: receitaId,
+          fonte_atualizada_em: original.atualizada_em,
+          criado_em: agora,
+          atualizado_em: agora,
+        });
+
+      if (overrideError) {
+        setSalvando(false);
+        return null;
+      }
+
+      await adicionarAoCache({
+        id: original.id,
+        user_id: original.user_id,
         nome: original.nome,
-        categorias: original.categorias,
+        categorias: Array.isArray(original.categorias) ? original.categorias : [original.categoria ?? 'Carnes'],
         imagem: original.imagem,
-        tempo_preparo: original.tempo_preparo,
+        tempoPreparo: original.tempo_preparo,
         porcoes: original.porcoes,
         dificuldade: original.dificuldade,
-        instrucoes: original.instrucoes ?? [],
-        publica: true,
-        fonte_receita_id: receitaId,
+        ingredientes: (original.ingredientes ?? []).map((i: any) => ({
+          id: i.id,
+          nome: i.nome,
+          quantidade: parseFloat(i.quantidade),
+          unidade: i.unidade,
+        })),
+        instrucoes: (original.instrucoes ?? []).map((inst: any) =>
+          typeof inst === 'string' ? { texto: inst } : inst
+        ),
+        publica: original.publica,
+        criadaEm: agora,
+        atualizadaEm: agora,
+        fonte_receita_id: original.id,
         fonte_atualizada_em: original.atualizada_em,
-        criada_em: agora,
-        atualizada_em: agora,
       });
 
-      if (!insertError && original.ingredientes?.length > 0) {
-        await supabase.from('ingredientes').insert(
-          original.ingredientes.map((i: any) => ({
-            receita_id: novoId,
-            nome: i.nome,
-            quantidade: i.quantidade,
-            unidade: i.unidade,
-          }))
-        );
-      }
-
-      if (!insertError) {
-        await adicionarAoCache({
-          id: novoId,
-          user_id: user.id,
-          nome: original.nome,
-          categorias: Array.isArray(original.categorias) ? original.categorias : [original.categoria ?? 'Carnes'],
-          imagem: original.imagem,
-          tempoPreparo: original.tempo_preparo,
-          porcoes: original.porcoes,
-          dificuldade: original.dificuldade,
-          ingredientes: (original.ingredientes ?? []).map((i: any) => ({
-            id: i.id,
-            nome: i.nome,
-            quantidade: parseFloat(i.quantidade),
-            unidade: i.unidade,
-          })),
-          instrucoes: (original.instrucoes ?? []).map((inst: any) =>
-            typeof inst === 'string' ? { texto: inst } : inst
-          ),
-          publica: true,
-          criadaEm: agora,
-          atualizadaEm: agora,
-          fonte_receita_id: receitaId,
-          fonte_atualizada_em: original.atualizada_em,
-        });
-        await supabase.rpc('incrementar_importacoes', { perfil_id: criadorId });
-      }
+      await supabase.rpc('incrementar_importacoes', { perfil_id: criadorId });
 
       setSalvando(false);
-      return insertError ? null : novoId;
+      return original.id;
     },
     [user]
   );
 
   const remover = useCallback(
-    async (copyId: string): Promise<void> => {
+    async (recipeId: string): Promise<void> => {
       if (!user) return;
-      await supabase.from('receitas').delete().eq('id', copyId).eq('user_id', user.id);
+      await supabase
+        .from('recipe_overrides')
+        .delete()
+        .match({ user_id: user.id, recipe_id: recipeId });
     },
     [user]
   );
