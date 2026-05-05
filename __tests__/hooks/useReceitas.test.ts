@@ -1,12 +1,14 @@
-import { renderHook, act } from '@testing-library/react-native';
+import { renderHook, act, waitFor } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useReceitas } from '../../hooks/useReceitas';
+import { supabase } from '../../lib/supabase';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
   require('@react-native-async-storage/async-storage/jest/async-storage-mock')
 );
 jest.mock('../../lib/supabase');
-jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: null }) }));
+let mockUser: any = null;
+jest.mock('../../hooks/useAuth', () => ({ useAuth: () => ({ user: mockUser }) }));
 
 const receitaBase = {
   nome: 'Frango Grelhado',
@@ -19,7 +21,11 @@ const receitaBase = {
 };
 
 describe('useReceitas', () => {
-  beforeEach(() => AsyncStorage.clear());
+  beforeEach(() => {
+    mockUser = null;
+    jest.clearAllMocks();
+    AsyncStorage.clear();
+  });
 
   it('começa com lista vazia', async () => {
     const { result } = renderHook(() => useReceitas());
@@ -58,12 +64,67 @@ describe('useReceitas', () => {
   it('busca receitas por nome', async () => {
     const { result } = renderHook(() => useReceitas());
     await act(async () => {});
-    await act(async () => {
-      result.current.adicionar(receitaBase);
-      result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categorias: ['Massas'] });
-    });
+    await act(async () => { result.current.adicionar(receitaBase); });
+    await act(async () => { result.current.adicionar({ ...receitaBase, nome: 'Macarrão', categorias: ['Massas'] }); });
     const encontradas = result.current.buscar('frango');
     expect(encontradas).toHaveLength(1);
     expect(encontradas[0].nome).toBe('Frango Grelhado');
+  });
+
+  it('recupera ingredientes da origem quando copia importada vem vazia', async () => {
+    mockUser = { id: 'user-1' };
+    const receitasChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockReturnThis(),
+      order: jest.fn().mockResolvedValue({
+        data: [{
+          id: 'copy-1',
+          user_id: 'user-1',
+          nome: 'Macarrão importado',
+          categorias: ['Massas'],
+          imagem: null,
+          tempo_preparo: 30,
+          porcoes: 4,
+          dificuldade: 'Fácil',
+          ingredientes: [],
+          instrucoes: [],
+          publica: true,
+          criada_em: '2026-05-01T00:00:00Z',
+          atualizada_em: '2026-05-01T00:00:00Z',
+          fonte_receita_id: 'orig-1',
+          fonte_atualizada_em: '2026-05-01T00:00:00Z',
+        }],
+        error: null,
+      }),
+    };
+    const ingredientesReadChain = {
+      select: jest.fn().mockReturnThis(),
+      eq: jest.fn().mockResolvedValue({
+        data: [{ id: 'ing-1', nome: 'Macarrão', quantidade: '200', unidade: 'g' }],
+        error: null,
+      }),
+    };
+    const ingredientesInsertChain = {
+      insert: jest.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    let ingredientesCalls = 0;
+    (supabase.from as jest.Mock).mockImplementation((table: string) => {
+      if (table === 'receitas') return receitasChain;
+      if (table === 'ingredientes') {
+        ingredientesCalls += 1;
+        return ingredientesCalls === 1 ? ingredientesReadChain : ingredientesInsertChain;
+      }
+      return {};
+    });
+
+    const { result } = renderHook(() => useReceitas());
+
+    await waitFor(() => expect(result.current.receitas).toHaveLength(1));
+    expect(result.current.receitas[0].ingredientes).toEqual([
+      { id: 'ing-1', nome: 'Macarrão', quantidade: 200, unidade: 'g' },
+    ]);
+    expect(ingredientesInsertChain.insert).toHaveBeenCalledWith([
+      { receita_id: 'copy-1', nome: 'Macarrão', quantidade: '200', unidade: 'g' },
+    ]);
   });
 });

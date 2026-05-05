@@ -1,5 +1,7 @@
 # Perfil com Drawer — Plano de Implementação
 
+**Status atual:** supersedido/pausado. O drawer/sidebar nao esta no fluxo visivel atual; Configuracoes e Ajuda tambem sairam da tela. Manter este plano como historico e referencia tecnica, mas nao usar como proxima implementacao enquanto o foco for polish, estabilidade e testes.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Adicionar drawer lateral com perfil do usuário, edição de nome/foto e logout ao app Noz.

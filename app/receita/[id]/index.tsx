@@ -1,12 +1,16 @@
-import { View, ScrollView, Image, Pressable, Alert, Modal } from 'react-native';
+import { View, ScrollView, Image, Pressable, Alert, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useFocusEffect } from '@react-navigation/native';
 import { useCallback, useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Clock, Users, ChefHat, MoreVertical, Eye, EyeOff, Pencil, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Clock, Users, ChefHat, MoreVertical, Eye, EyeOff, Pencil, Trash2, Heart, MessageCircle } from 'lucide-react-native';
 import { useReceitas } from '../../../hooks/useReceitas';
 import { usePublicar } from '../../../hooks/usePublicar';
+import { useAuth } from '../../../hooks/useAuth';
+import { useCoracoes } from '../../../hooks/useCoracoes';
+import { useComentarios } from '../../../hooks/useComentarios';
+import { Receita } from '../../../types';
 import { AppText } from '../../../components/ui/AppText';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
@@ -14,16 +18,92 @@ import { IngredienteItem } from '../../../components/IngredienteItem';
 import { InstrucaoItem } from '../../../components/InstrucaoItem';
 import { supabase } from '../../../lib/supabase';
 
+function mapReceitaSupabase(r: any): Receita {
+  return {
+    id: r.id,
+    user_id: r.user_id,
+    nome: r.nome,
+    categorias: Array.isArray(r.categorias) ? r.categorias : [r.categoria ?? 'Carnes'],
+    imagem: r.imagem ?? undefined,
+    tempoPreparo: r.tempo_preparo,
+    porcoes: r.porcoes,
+    dificuldade: r.dificuldade,
+    ingredientes: (r.ingredientes ?? []).map((i: any) => ({
+      id: i.id,
+      nome: i.nome,
+      quantidade: parseFloat(i.quantidade),
+      unidade: i.unidade,
+    })),
+    instrucoes: (r.instrucoes ?? []).map((inst: any) =>
+      typeof inst === 'string' ? { texto: inst } : inst
+    ),
+    publica: r.publica,
+    criadaEm: r.criada_em,
+    atualizadaEm: r.atualizada_em,
+    fonte_receita_id: r.fonte_receita_id,
+    fonte_atualizada_em: r.fonte_atualizada_em,
+  };
+}
+
 export default function ReceitaDetalhesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const { user } = useAuth();
   const { receitas, remover, editar, carregarReceitas } = useReceitas();
   const { togglePublicar } = usePublicar();
-  const receita = receitas.find((r) => r.id === id);
+  const receitaLocal = receitas.find((r) => r.id === id);
+  const [receitaPublica, setReceitaPublica] = useState<Receita | null>(null);
+  const [carregandoPublica, setCarregandoPublica] = useState(false);
+  const receita = receitaLocal ?? receitaPublica;
+  const { coracoes, carregarCorações: carregarCoracoes, toggleCoracao } = useCoracoes(receita ? [receita.id] : []);
+  const coracao = coracoes.get(receita?.id ?? '');
+  const { total: totalComentarios, carregar: carregarComentarios } = useComentarios(receita?.id ?? '');
+  const podeEditar = !!receitaLocal && receita?.user_id === user?.id;
   const [originalAtualizada, setOriginalAtualizada] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
   const [criadorOriginal, setCriadorOriginal] = useState<{ id: string; nome: string; foto_url?: string } | null>(null);
 
   useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
+
+  useEffect(() => {
+    if (receita?.id) carregarCoracoes([receita.id]);
+  }, [receita?.id, carregarCoracoes]);
+
+  useEffect(() => {
+    if (receita?.id) carregarComentarios();
+  }, [receita?.id, carregarComentarios]);
+
+  useEffect(() => {
+    if (!id || receitaLocal) {
+      setReceitaPublica(null);
+      setCarregandoPublica(false);
+      return;
+    }
+
+    let ativo = true;
+    setCarregandoPublica(true);
+    async function carregarPublica() {
+      const { data } = await supabase
+        .from('receitas')
+        .select('*, ingredientes(*)')
+        .eq('id', id)
+        .eq('publica', true)
+        .single();
+
+      if (ativo) {
+        setReceitaPublica(data ? mapReceitaSupabase(data) : null);
+        setCarregandoPublica(false);
+      }
+    }
+
+    carregarPublica().catch(() => {
+      if (ativo) {
+        setReceitaPublica(null);
+        setCarregandoPublica(false);
+      }
+    });
+
+    return () => { ativo = false; };
+  }, [id, receitaLocal?.id]);
 
   useEffect(() => {
     if (!receita?.fonte_receita_id) { setCriadorOriginal(null); return; }
@@ -46,6 +126,15 @@ export default function ReceitaDetalhesScreen() {
       });
   }, [receita?.fonte_receita_id, receita?.fonte_atualizada_em]);
 
+  if (carregandoPublica && !receita) {
+    return (
+      <SafeAreaView className="flex-1 bg-background items-center justify-center gap-3">
+        <ActivityIndicator color="#8B4513" />
+        <AppText variant="muted">Carregando receita...</AppText>
+      </SafeAreaView>
+    );
+  }
+
   if (!receita) {
     return (
       <SafeAreaView className="flex-1 bg-background items-center justify-center">
@@ -58,6 +147,7 @@ export default function ReceitaDetalhesScreen() {
   const publica = receita.publica !== false;
 
   async function handleTogglePublicar() {
+    if (!podeEditar) return;
     const ok = await togglePublicar(receita!.id, publica);
     if (ok) editar(receita!.id, { publica: !publica });
   }
@@ -93,6 +183,27 @@ export default function ReceitaDetalhesScreen() {
           </LinearGradient>
         </View>
 
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#F5F0EB' }}>
+          <Pressable
+            onPress={() => toggleCoracao(receita.id)}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Heart
+              size={20}
+              color="#8B4513"
+              fill={coracao?.meu ? '#8B4513' : 'none'}
+            />
+            <AppText style={{ fontSize: 13, color: '#2C1810' }}>
+              {coracao?.total ?? 0}
+            </AppText>
+          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <MessageCircle size={20} color="#8B4513" />
+            <AppText style={{ fontSize: 13, color: '#2C1810' }}>{totalComentarios}</AppText>
+          </View>
+        </View>
+
         <View className="px-4 py-6 gap-6 pb-12">
           {originalAtualizada && (
             <Pressable
@@ -112,8 +223,12 @@ export default function ReceitaDetalhesScreen() {
           {criadorOriginal && (
             <Pressable
               onPress={() => router.push(`/perfil/${criadorOriginal.id}` as any)}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'white', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10, backgroundColor: 'white', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
             >
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <AppText variant="muted" style={{ fontSize: 11, textAlign: 'right' }}>Compartilhada por</AppText>
+                <AppText style={{ fontWeight: '600', fontSize: 14, textAlign: 'right' }}>{criadorOriginal.nome}</AppText>
+              </View>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
                 {criadorOriginal.foto_url
                   ? <Image source={{ uri: criadorOriginal.foto_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
@@ -121,10 +236,6 @@ export default function ReceitaDetalhesScreen() {
                       {criadorOriginal.nome.trim().split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
                     </AppText>
                 }
-              </View>
-              <View style={{ flex: 1 }}>
-                <AppText variant="muted" style={{ fontSize: 11 }}>Importada de</AppText>
-                <AppText style={{ fontWeight: '600', fontSize: 14 }}>{criadorOriginal.nome}</AppText>
               </View>
               <AppText variant="muted" style={{ fontSize: 12 }}>Ver perfil →</AppText>
             </Pressable>
@@ -170,14 +281,16 @@ export default function ReceitaDetalhesScreen() {
           <Pressable onPress={() => router.back()} className="bg-black/30 rounded-full p-2">
             <ArrowLeft size={20} color="white" />
           </Pressable>
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={handleTogglePublicar} className="bg-black/30 rounded-full p-2">
-              {publica ? <Eye size={20} color="white" /> : <EyeOff size={20} color="white" />}
-            </Pressable>
-            <Pressable onPress={() => setMenuAberto(true)} className="bg-black/30 rounded-full p-2">
-              <MoreVertical size={20} color="white" />
-            </Pressable>
-          </View>
+          {podeEditar && (
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable onPress={handleTogglePublicar} className="bg-black/30 rounded-full p-2">
+                {publica ? <Eye size={20} color="white" /> : <EyeOff size={20} color="white" />}
+              </Pressable>
+              <Pressable onPress={() => setMenuAberto(true)} className="bg-black/30 rounded-full p-2">
+                <MoreVertical size={20} color="white" />
+              </Pressable>
+            </View>
+          )}
         </View>
       </SafeAreaView>
 

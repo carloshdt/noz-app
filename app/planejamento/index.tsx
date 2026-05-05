@@ -70,7 +70,7 @@ export default function PlanejamentoScreen() {
       headerStyle: { backgroundColor: '#FAF6F1' },
       headerShadowVisible: false,
       headerTitleStyle: {
-        fontFamily: 'PlayfairDisplay_700Bold',
+        fontFamily: 'Lora_600SemiBold',
         fontSize: 20,
         color: '#2C1810',
       },

@@ -1,8 +1,10 @@
 # Instagram Noz - Plano Editorial
 
 **Data:** 2026-05-02  
-**Status:** Planejado  
+**Status:** Pausado  
 **Foco:** Construção de marca
+
+Nota atual: Instagram nao entra agora. Este plano fica guardado para depois que o app estiver mais estavel, bonito de usar e com os fluxos principais testados.
 
 ---
 

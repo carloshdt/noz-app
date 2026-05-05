@@ -12,7 +12,7 @@ export default function TabLayout() {
           headerStyle: { backgroundColor: '#FAF6F1' },
           headerShadowVisible: false,
           headerTitleStyle: {
-            fontFamily: 'PlayfairDisplay_700Bold',
+            fontFamily: 'Lora_600SemiBold',
             fontSize: 20,
             color: '#2C1810',
           },
@@ -40,6 +40,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="cardapio"
           options={{
+            headerShown: false,
             title: 'Cardápio',
             tabBarIcon: ({ color }) => <CalendarDays size={22} color={color} />,
           }}
@@ -48,9 +49,7 @@ export default function TabLayout() {
           name="feed"
           options={{
             title: 'Feed',
-            headerTitle: () => (
-              <AppText style={{ fontSize: 32 }}>🌰</AppText>
-            ),
+            headerTitle: '',
             tabBarIcon: ({ color }) => <Rss size={22} color={color} />,
           }}
         />

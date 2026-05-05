@@ -17,24 +17,27 @@ const receitaRaw = {
   dificuldade: 'Fácil',
   criada_em: '2026-05-01T00:00:00Z',
   user_id: 'user-2',
-  profiles: {
-    id: 'user-2',
-    nome: 'Maria',
-    foto_url: null,
-    total_importacoes: 5,
-  },
 };
 
 function setupFeedMock(data: any[], error: any = null) {
-  const chain = {
+  const receitasChain = {
     select: jest.fn().mockReturnThis(),
     eq: jest.fn().mockReturnThis(),
     neq: jest.fn().mockReturnThis(),
     order: jest.fn().mockReturnThis(),
     range: jest.fn().mockResolvedValue({ data, error }),
   };
-  (supabase.from as jest.Mock).mockReturnValue(chain);
-  return chain;
+  const profilesChain = {
+    select: jest.fn().mockReturnThis(),
+    in: jest.fn().mockResolvedValue({
+      data: [{ id: 'user-2', nome: 'Maria', foto_url: null, total_importacoes: 5 }],
+      error: null,
+    }),
+  };
+  (supabase.from as jest.Mock).mockImplementation((table: string) =>
+    table === 'profiles' ? profilesChain : receitasChain
+  );
+  return receitasChain;
 }
 
 describe('useFeed', () => {

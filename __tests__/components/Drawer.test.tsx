@@ -13,7 +13,7 @@ jest.mock('react-native-safe-area-context', () => ({
 }));
 
 const mockUser = { id: 'user-1', email: 'carlos@test.com' } as any;
-const mockProfile = { id: 'user-1', nome: 'Carlos', foto_url: null, criado_em: '2026-01-01' };
+const mockProfile = { id: 'user-1', nome: 'Carlos', foto_url: undefined, criado_em: '2026-01-01' };
 
 describe('Drawer', () => {
   it('mostra nome e email do usuário', () => {

@@ -1,6 +1,6 @@
 import { renderHook, act } from '@testing-library/react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCardapio } from '../../hooks/useCardapio';
+import { __limparPlanosEmMemoriaParaTestes, useCardapio } from '../../hooks/useCardapio';
 import { Receita } from '../../types';
 
 jest.mock('@react-native-async-storage/async-storage', () =>
@@ -25,7 +25,10 @@ const receita: Receita = {
 };
 
 describe('useCardapio', () => {
-  beforeEach(() => AsyncStorage.clear());
+  beforeEach(() => {
+    __limparPlanosEmMemoriaParaTestes();
+    AsyncStorage.clear();
+  });
 
   it('começa com plano vazio', async () => {
     const { result } = renderHook(() => useCardapio());
@@ -33,12 +36,13 @@ describe('useCardapio', () => {
     expect(result.current.plano.receitas).toHaveLength(0);
   });
 
-  it('adiciona receita com 1 batch', async () => {
+  it('adiciona receita sem dia com 1 batch separado', async () => {
     const { result } = renderHook(() => useCardapio());
     await act(async () => {});
     await act(async () => { result.current.adicionarReceita('1', 1); });
     expect(result.current.plano.receitas).toHaveLength(1);
-    expect(result.current.plano.receitas[0].batches).toBe(1);
+    expect(result.current.plano.receitas[0].batches).toBe(0);
+    expect(result.current.plano.receitas[0].batchesSemDias).toBe(1);
   });
 
   it('adiciona receita com dias atribuídos', async () => {
@@ -75,6 +79,36 @@ describe('useCardapio', () => {
     expect(ovo?.quantidade).toBe(4);
   });
 
+  it('recarrega receita sem dia salva por outra instancia do hook', async () => {
+    const primeiro = renderHook(() => useCardapio());
+    await act(async () => {});
+    await act(async () => { primeiro.result.current.adicionarReceita('1', 1); });
+
+    const segundo = renderHook(() => useCardapio());
+    await act(async () => { await segundo.result.current.recarregar(); });
+
+    const lista = segundo.result.current.gerarListaCompras([receita]);
+    expect(lista).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ nome: 'Frango', quantidade: 500 }),
+        expect.objectContaining({ nome: 'Ovo', quantidade: 2 }),
+      ])
+    );
+  });
+
+  it('converte receita sem dia para dias ao editar distribuicao', async () => {
+    const { result } = renderHook(() => useCardapio());
+    await act(async () => {});
+    await act(async () => { result.current.adicionarReceita('1', 1); });
+    await act(async () => {
+      result.current.editarDiasReceita('1', 2, [{ dia: 1, porcoes: 4 }], 'semDias');
+    });
+
+    expect(result.current.plano.receitas[0].batches).toBe(2);
+    expect(result.current.plano.receitas[0].batchesSemDias).toBe(0);
+    expect(result.current.plano.receitas[0].dias).toEqual([{ dia: 1, porcoes: 4 }]);
+  });
+
   it('migra formato antigo CardapioDia[]', async () => {
     const antigo = [
       { diaSemana: 0, receitaId: '1', porcoes: 4 },
@@ -87,5 +121,6 @@ describe('useCardapio', () => {
     expect(result.current.plano.receitas).toHaveLength(1);
     expect(result.current.plano.receitas[0].dias).toEqual([{ dia: 0, porcoes: 1 }, { dia: 2, porcoes: 1 }]);
     expect(result.current.plano.receitas[0].batches).toBe(1);
+    expect(result.current.plano.receitas[0].batchesSemDias).toBeUndefined();
   });
 });

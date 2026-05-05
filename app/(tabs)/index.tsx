@@ -21,15 +21,22 @@ function FilterOption({ label, ativo, onPress }: FilterOptionProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={{ width: '31%' }}
-      className={`h-10 rounded-xl border items-center justify-center px-2 ${
-        ativo ? 'bg-primary border-primary' : 'bg-surface border-border'
-      }`}
+      style={{
+        width: '31%',
+        height: 34,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: ativo ? '#8B4513' : '#E5E7EB',
+        backgroundColor: ativo ? '#8B4513' : 'white',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 6,
+      }}
     >
       <AppText
         numberOfLines={1}
         adjustsFontSizeToFit
-        className={`text-[12px] font-sans-medium ${ativo ? 'text-white' : 'text-text'}`}
+        style={{ fontSize: 11, fontWeight: '500', color: ativo ? 'white' : '#2C1810' }}
       >
         {label}
       </AppText>
@@ -46,7 +53,17 @@ export default function ReceitasScreen() {
   const [filtroTempo, setFiltroTempo] = useState<number | null>(null);
   const [filtroDificuldade, setFiltroDificuldade] = useState<string | null>(null);
 
-  useFocusEffect(useCallback(() => { carregarReceitas(); }, [carregarReceitas]));
+  useFocusEffect(useCallback(() => {
+    carregarReceitas();
+
+    return () => {
+      setBusca('');
+      setCategoriasAtivas(new Set());
+      setFiltrosAbertos(false);
+      setFiltroTempo(null);
+      setFiltroDificuldade(null);
+    };
+  }, [carregarReceitas]));
 
   useEffect(() => {
     const importadas = receitas.filter((r) => r.fonte_receita_id);
@@ -96,8 +113,8 @@ export default function ReceitasScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom', 'left', 'right']}>
-      <View className="px-4 pt-4 pb-2 gap-4">
-        <AppText variant="title">O que vamos cozinhar?</AppText>
+      <View className="px-4 pt-3 pb-1 gap-2">
+        <AppText variant="title" className="text-[24px]">O que vamos cozinhar?</AppText>
         <View className="flex-row items-center gap-2">
           <View className="flex-1">
             <TextInput
@@ -105,18 +122,18 @@ export default function ReceitasScreen() {
               placeholderTextColor="#8C7B6B"
               value={busca}
               onChangeText={setBusca}
-              style={{ height: 46, textAlignVertical: 'center' }}
-              className="bg-surface border border-border rounded-card px-3.5 py-0 font-sans text-[15px] text-text"
+              style={{ height: 40, textAlignVertical: 'center' }}
+              className="bg-surface border border-border rounded-card px-3 py-0 font-sans text-[14px] text-text"
             />
           </View>
           <Pressable
             onPress={() => setFiltrosAbertos(true)}
-            style={{ width: 46, height: 46 }}
+            style={{ width: 40, height: 40 }}
             className={`rounded-card border items-center justify-center ${
               filtrosAtivos > 0 ? 'bg-primary border-primary' : 'bg-surface border-border'
             }`}
           >
-            <Funnel size={18} color={filtrosAtivos > 0 ? 'white' : '#8C7B6B'} />
+            <Funnel size={17} color={filtrosAtivos > 0 ? 'white' : '#8C7B6B'} />
             {filtrosAtivos > 0 && (
               <View
                 style={{ top: -5, right: -5, width: 20, height: 20 }}
@@ -141,27 +158,27 @@ export default function ReceitasScreen() {
         animationType="fade"
         onRequestClose={() => setFiltrosAbertos(false)}
       >
-        <View className="flex-1 bg-black/35 justify-end">
-          <Pressable className="flex-1" onPress={() => setFiltrosAbertos(false)} />
-          <View className="bg-background rounded-t-2xl px-4 pt-4 pb-6 gap-5">
-            <View className="flex-row items-center justify-between">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
+          <Pressable style={{ flex: 1 }} onPress={() => setFiltrosAbertos(false)} />
+          <View style={{ backgroundColor: '#FAF6F1', borderTopLeftRadius: 18, borderTopRightRadius: 18, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 18, gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <View>
                 <AppText variant="heading">Filtros</AppText>
-                <AppText variant="muted" className="text-[12px]">
+                <AppText variant="muted" style={{ fontSize: 11, marginTop: 1 }}>
                   Refine seu acervo de receitas
                 </AppText>
               </View>
               <Pressable
                 onPress={() => setFiltrosAbertos(false)}
-                className="w-10 h-10 rounded-full bg-surface items-center justify-center"
+                style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'white', alignItems: 'center', justifyContent: 'center' }}
               >
                 <X size={18} color="#2C1810" />
               </Pressable>
             </View>
 
-            <View className="gap-2">
-              <AppText variant="muted" className="text-[11px] uppercase">Categorias</AppText>
-              <View className="flex-row flex-wrap gap-2">
+            <View style={{ gap: 6 }}>
+              <AppText variant="muted" style={{ fontSize: 11, textTransform: 'uppercase' }}>Categorias</AppText>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {CATEGORIAS.map((cat) => (
                   <FilterOption
                     key={cat}
@@ -173,9 +190,9 @@ export default function ReceitasScreen() {
               </View>
             </View>
 
-            <View className="gap-2">
-              <AppText variant="muted" className="text-[11px] uppercase">Tempo</AppText>
-              <View className="flex-row flex-wrap gap-2">
+            <View style={{ gap: 6 }}>
+              <AppText variant="muted" style={{ fontSize: 11, textTransform: 'uppercase' }}>Tempo</AppText>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {[{ label: 'até 15 min', valor: 15 }, { label: 'até 30 min', valor: 30 }, { label: 'até 1h', valor: 60 }].map((t) => (
                   <FilterOption
                     key={t.valor}
@@ -187,9 +204,9 @@ export default function ReceitasScreen() {
               </View>
             </View>
 
-            <View className="gap-2">
-              <AppText variant="muted" className="text-[11px] uppercase">Dificuldade</AppText>
-              <View className="flex-row flex-wrap gap-2">
+            <View style={{ gap: 6 }}>
+              <AppText variant="muted" style={{ fontSize: 11, textTransform: 'uppercase' }}>Dificuldade</AppText>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {(['Fácil', 'Médio', 'Difícil'] as const).map((d) => (
                   <FilterOption
                     key={d}
@@ -201,18 +218,18 @@ export default function ReceitasScreen() {
               </View>
             </View>
 
-            <View className="flex-row gap-2">
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable
                 onPress={limparFiltros}
-                className="flex-1 h-12 rounded-xl border border-border bg-surface items-center justify-center"
+                style={{ flex: 1, height: 42, borderRadius: 12, backgroundColor: 'white', borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' }}
               >
-                <AppText className="font-sans-medium text-text">Limpar</AppText>
+                <AppText style={{ fontWeight: '500', color: '#2C1810' }}>Limpar</AppText>
               </Pressable>
               <Pressable
                 onPress={() => setFiltrosAbertos(false)}
-                className="flex-1 h-12 rounded-xl bg-primary items-center justify-center"
+                style={{ flex: 1, height: 42, borderRadius: 12, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center' }}
               >
-                <AppText className="font-sans-bold text-white">Aplicar</AppText>
+                <AppText style={{ fontWeight: '700', color: 'white' }}>Aplicar</AppText>
               </Pressable>
             </View>
           </View>

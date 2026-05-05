@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
-import { Receita } from '../types';
+import { Ingrediente, Receita } from '../types';
 import { uploadImagem, isLocalUri } from '../lib/uploadImagem';
 
 const CACHE_KEY = '@receitas_v2';
@@ -32,6 +32,22 @@ async function getCache(): Promise<Receita[]> {
 
 async function setCache(receitas: Receita[]) {
   await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(receitas));
+}
+
+async function carregarIngredientesDaReceita(receitaId: string): Promise<Ingrediente[]> {
+  const { data, error } = await supabase
+    .from('ingredientes')
+    .select('id, nome, quantidade, unidade')
+    .eq('receita_id', receitaId);
+
+  if (error || !data) return [];
+
+  return data.map((i: any) => ({
+    id: i.id,
+    nome: i.nome,
+    quantidade: parseFloat(i.quantidade),
+    unidade: i.unidade,
+  }));
 }
 
 export function useReceitas() {
@@ -76,14 +92,36 @@ export function useReceitas() {
         publica: r.publica,
         criadaEm: r.criada_em,
         atualizadaEm: r.atualizada_em,
+        fonte_receita_id: r.fonte_receita_id,
+        fonte_atualizada_em: r.fonte_atualizada_em,
       }));
+
+      const comIngredientesRecuperados = await Promise.all(
+        mapeadas.map(async (r) => {
+          if (r.ingredientes.length > 0 || !r.fonte_receita_id) return r;
+
+          const ingredientes = await carregarIngredientesDaReceita(r.fonte_receita_id);
+          if (ingredientes.length === 0) return r;
+
+          await supabase.from('ingredientes').insert(
+            ingredientes.map((i) => ({
+              receita_id: r.id,
+              nome: i.nome,
+              quantidade: String(i.quantidade),
+              unidade: i.unidade,
+            }))
+          );
+
+          return { ...r, ingredientes };
+        })
+      );
 
       // Merge Supabase data with in-memory/cache ingredients to handle race condition
       // where _syncReceita hasn't finished when carregarReceitas fires.
       // Functional update accesses current state without adding it as a dep.
       setReceitas((current) => {
         const currentMap = new Map(current.map((r) => [r.id, r]));
-        return mapeadas.map((r) => {
+        return comIngredientesRecuperados.map((r) => {
           if (r.ingredientes.length > 0) return r;
           return {
             ...r,
@@ -97,7 +135,7 @@ export function useReceitas() {
 
       // Write cache and re-sync recipes that still have no ingredients in Supabase
       const toResync: Receita[] = [];
-      const merged = mapeadas.map((r) => {
+      const merged = comIngredientesRecuperados.map((r) => {
         if (r.ingredientes.length > 0) return r;
         const localIngredientes =
           cacheMap.get(r.id)?.ingredientes ?? [];

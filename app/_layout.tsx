@@ -1,5 +1,5 @@
 import { Stack, router } from 'expo-router';
-import { useFonts, PlayfairDisplay_700Bold } from '@expo-google-fonts/playfair-display';
+import { useFonts, Lora_600SemiBold, Lora_700Bold } from '@expo-google-fonts/lora';
 import { Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -34,13 +34,15 @@ function RootNavigator() {
       <Stack.Screen name="perfil/editar" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="planejamento/index" options={{ presentation: 'modal', headerShown: false }} />
       <Stack.Screen name="perfil/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="comentarios/[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
-    PlayfairDisplay_700Bold,
+    Lora_600SemiBold,
+    Lora_700Bold,
     Inter_400Regular,
     Inter_500Medium,
     Inter_700Bold,

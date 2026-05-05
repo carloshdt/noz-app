@@ -14,7 +14,8 @@ module.exports = {
         border: '#D4C4B0',
       },
       fontFamily: {
-        serif: ['PlayfairDisplay_700Bold'],
+        serif: ['Lora_600SemiBold'],
+        'serif-bold': ['Lora_700Bold'],
         sans: ['Inter_400Regular'],
         'sans-medium': ['Inter_500Medium'],
         'sans-bold': ['Inter_700Bold'],

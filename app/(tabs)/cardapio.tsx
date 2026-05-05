@@ -1,7 +1,7 @@
 import { View, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState, useLayoutEffect, useMemo, useCallback } from 'react';
-import { useNavigation, useFocusEffect } from 'expo-router';
+import { useState, useMemo, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 import { Plus, X, Minus, Pencil } from 'lucide-react-native';
 import { Receita, PlanoReceita, PeriodoPlanejamento, DiaPorcao } from '../../types';
 import { useCardapio } from '../../hooks/useCardapio';
@@ -34,34 +34,28 @@ function rotuloDia(data: Date): string {
 }
 
 type Etapa = 'receitas' | 'batches' | 'dias';
+type Visualizacao = 'receitas' | 'dias';
 
 export default function CardapioScreen() {
-  const navigation = useNavigation();
   const { plano, adicionarReceita, editarDiasReceita, removerReceita, limpar } = useCardapio();
   const { periodo, diaInicio, recarregar } = useConfiguracao();
-  const { receitas } = useReceitas();
+  const { receitas, carregarReceitas } = useReceitas();
 
-  useFocusEffect(useCallback(() => { recarregar(); }, [recarregar]));
+  useFocusEffect(useCallback(() => {
+    recarregar();
+    carregarReceitas();
+  }, [recarregar, carregarReceitas]));
 
   const [modalAberto, setModalAberto] = useState(false);
   const [receitaSelecionada, setReceitaSelecionada] = useState<Receita | null>(null);
   const [batches, setBatches] = useState(1);
   const [diasSelecionados, setDiasSelecionados] = useState<DiaPorcao[]>([]);
   const [etapa, setEtapa] = useState<Etapa>('receitas');
+  const [visualizacao, setVisualizacao] = useState<Visualizacao>('receitas');
   const [editandoTipo, setEditandoTipo] = useState<'comDias' | 'semDias' | null>(null);
   const [editandoReceitaId, setEditandoReceitaId] = useState<string | null>(null);
 
   const datas = useMemo(() => obterDatasDoPerio(periodo, diaInicio), [periodo, diaInicio]);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <Pressable onPress={limpar} style={{ paddingRight: 16 }}>
-          <AppText variant="muted" className="text-[13px]">Limpar</AppText>
-        </Pressable>
-      ),
-    });
-  }, [limpar]);
 
   function abrirModal(dia?: number) {
     setReceitaSelecionada(null);
@@ -89,7 +83,7 @@ export default function CardapioScreen() {
       setBatches(pr.batchesSemDias ?? 1);
       setDiasSelecionados([]);
     }
-    setEtapa('batches');
+    setEtapa('dias');
     setModalAberto(true);
   }
 
@@ -116,6 +110,9 @@ export default function CardapioScreen() {
   const totalPorcoesDisp = receitaSelecionada ? batches * receitaSelecionada.porcoes : 0;
   const totalPorcoesDistrib = diasSelecionados.reduce((s, d) => s + d.porcoes, 0);
   const porcoesRestantes = totalPorcoesDisp - totalPorcoesDistrib;
+  const batchesMinimosParaDias = receitaSelecionada
+    ? Math.max(1, Math.ceil(totalPorcoesDistrib / receitaSelecionada.porcoes))
+    : 1;
 
   function setPorcoesNoDia(dia: number, delta: number) {
     setDiasSelecionados((prev) => {
@@ -154,22 +151,50 @@ export default function CardapioScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['bottom', 'left', 'right']}>
+    <SafeAreaView className="flex-1 bg-background" edges={['top', 'bottom', 'left', 'right']}>
       <ScrollView className="flex-1" contentContainerStyle={{ paddingBottom: 24 }}>
+        <View className="px-4 pt-4 gap-4">
+          <View className="gap-1">
+            <AppText variant="title">Monte seu cardápio</AppText>
+            <AppText variant="muted" className="text-[13px]">
+              Planeje suas receitas por preparo ou por dia
+            </AppText>
+          </View>
+          <View className="flex-row rounded-card bg-surface border border-border p-1">
+            {([
+              { label: 'Receitas', value: 'receitas' },
+              { label: 'Dias', value: 'dias' },
+            ] as const).map((item) => {
+              const ativo = visualizacao === item.value;
+              return (
+                <Pressable
+                  key={item.value}
+                  onPress={() => setVisualizacao(item.value)}
+                  className={`flex-1 h-10 rounded-card items-center justify-center ${ativo ? 'bg-primary' : ''}`}
+                >
+                  <AppText className={`font-sans-medium text-[13px] ${ativo ? 'text-white' : 'text-muted'}`}>
+                    {item.label}
+                  </AppText>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
         {/* Receitas do período */}
+        {visualizacao === 'receitas' && (
         <View className="px-4 pt-4 pb-2">
           <View className="flex-row justify-between items-center mb-2">
-            <AppText variant="heading" className="text-[14px]">Receitas do período</AppText>
-            <Pressable
-              onPress={() => abrirModal()}
-              className="w-8 h-8 rounded-full bg-primary items-center justify-center"
-            >
-              <Plus size={16} color="white" />
+            <AppText variant="heading" className="text-[14px]">Receitas planejadas</AppText>
+            <Pressable onPress={limpar}>
+              <AppText variant="muted" className="text-[13px]">Limpar</AppText>
             </Pressable>
           </View>
 
           {plano.receitas.length === 0 ? (
-            <AppText variant="muted" className="text-[13px] py-2">Nenhuma receita — toque em + para adicionar</AppText>
+            <View className="flex-1 items-center justify-center gap-2 py-20">
+              <AppText variant="muted">Nenhuma receita planejada</AppText>
+              <AppText variant="muted" className="text-[13px]">Toque no + para adicionar</AppText>
+            </View>
           ) : (
             <View className="gap-2">
               {plano.receitas.flatMap((pr) => {
@@ -182,7 +207,7 @@ export default function CardapioScreen() {
                       <View className="flex-1">
                         <AppText variant="heading" className="text-[14px]">{r.nome}</AppText>
                         <AppText variant="muted" className="text-[12px]">
-                          {pr.dias.map((d) => rotuloDia(datas[d.dia])).join(', ')}
+                          {`Dias definidos · ${pr.batches * r.porcoes} porções`}
                         </AppText>
                       </View>
                       <Pressable onPress={() => editarReceita(pr, r, 'comDias')} className="p-1">
@@ -230,10 +255,12 @@ export default function CardapioScreen() {
             </View>
           )}
         </View>
+        )}
 
         {/* Lista de dias */}
-        <View className="px-4 pt-2">
-          <AppText variant="heading" className="text-[14px] mb-2">Dias</AppText>
+        {visualizacao === 'dias' && (
+        <View className="px-4 pt-4">
+          <AppText variant="heading" className="text-[14px] mb-2">Cardápio por dia</AppText>
           {Array.from({ length: Math.ceil(datas.length / 7) }, (_, semana) => {
             const inicio = semana * 7;
             const diasDaSemana = datas.slice(inicio, inicio + 7);
@@ -280,7 +307,16 @@ export default function CardapioScreen() {
             );
           })}
         </View>
+        )}
       </ScrollView>
+
+      <Pressable
+        onPress={() => abrirModal()}
+        className="absolute bottom-6 right-6 bg-primary w-14 h-14 rounded-full items-center justify-center"
+        style={{ shadowColor: '#8B4513', shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 }}
+      >
+        <Plus size={24} color="white" />
+      </Pressable>
 
       {/* Modal */}
       <Modal visible={modalAberto} animationType="slide" presentationStyle="pageSheet">
@@ -340,15 +376,49 @@ export default function CardapioScreen() {
                   {batches * receitaSelecionada.porcoes} porções no total
                 </AppText>
               </Card>
-              <Button label="Escolher dias" onPress={() => confirmarBatches(false)} />
-              <Button label="Adicionar sem dia específico" variant="secondary" onPress={() => confirmarBatches(true)} />
-              <Button label="Voltar" variant="secondary" onPress={() => setEtapa('receitas')} />
+              {editandoTipo === 'semDias' ? (
+                <>
+                  <Button label="Confirmar" onPress={() => confirmarBatches(true)} />
+                  <Button label="Cancelar" variant="secondary" onPress={fecharModal} />
+                </>
+              ) : (
+                <>
+                  <Button label="Escolher dias" onPress={() => confirmarBatches(false)} />
+                  <Button label="Adicionar sem dia específico" variant="secondary" onPress={() => confirmarBatches(true)} />
+                  {!editandoTipo && <Button label="Voltar" variant="secondary" onPress={() => setEtapa('receitas')} />}
+                </>
+              )}
             </View>
           )}
 
           {etapa === 'dias' && receitaSelecionada && (
             <View className="flex-1">
-              <View className="px-4 py-2 border-b border-border">
+              <View className="px-4 py-3 border-b border-border gap-3">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-1 pr-3">
+                    <AppText variant="heading" className="text-[14px]" numberOfLines={1}>{receitaSelecionada.nome}</AppText>
+                    <AppText variant="muted" className="text-[12px]">Rende {receitaSelecionada.porcoes} porções por preparo</AppText>
+                  </View>
+                  <View className="flex-row items-center gap-3">
+                    <Pressable
+                      onPress={() => setBatches((b) => Math.max(batchesMinimosParaDias, b - 1))}
+                      disabled={batches <= batchesMinimosParaDias}
+                      className={`w-8 h-8 rounded-full border items-center justify-center ${batches <= batchesMinimosParaDias ? 'border-border opacity-30' : 'border-primary bg-primary/10'}`}
+                    >
+                      <Minus size={14} color={batches <= batchesMinimosParaDias ? '#8C7B6B' : '#6B4F3A'} />
+                    </Pressable>
+                    <View className="items-center">
+                      <AppText className="font-sans-bold text-[20px] text-primary w-8 text-center">{batches}</AppText>
+                      <AppText variant="muted" className="text-[10px]">{batches === 1 ? 'preparo' : 'preparos'}</AppText>
+                    </View>
+                    <Pressable
+                      onPress={() => setBatches((b) => b + 1)}
+                      className="w-8 h-8 rounded-full border border-primary bg-primary/10 items-center justify-center"
+                    >
+                      <Plus size={14} color="#6B4F3A" />
+                    </Pressable>
+                  </View>
+                </View>
                 <AppText variant="muted" className="text-[13px] text-center">
                   {totalPorcoesDistrib}/{totalPorcoesDisp} porções distribuídas
                   {porcoesRestantes > 0 ? ` · restam ${porcoesRestantes}` : ' · completo'}

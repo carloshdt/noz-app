@@ -4,6 +4,22 @@ Lista de ajustes e melhorias menores que podem entrar no produto sem necessariam
 
 ---
 
+## Estado Atual - Maio 2026
+
+Foco agora: estabilizar a experiencia, deixar o app bonito de usar e manter testes verdes antes de abrir novas frentes grandes.
+
+Nao puxar para implementacao agora:
+- Infra de email/Supabase que depende de configuracao externa
+- Login social do Google
+- Conta oficial Noz/Chef
+- Instagram
+- Acervo de imagens
+- Sidebar/drawer como navegacao principal
+
+Observacao de produto: Configuracoes e Ajuda nao estao mais no fluxo visivel atual. O app esta operando principalmente pelas tabs, e qualquer retorno da sidebar/drawer deve ser reavaliado depois do polish.
+
+---
+
 ## Tela de Receitas
 
 ### Filtros Avançados ✅ implementado
@@ -28,6 +44,8 @@ Descartados:
 ## Imagens
 
 ### Acervo de Imagens
+
+Status: pausado. Ideia boa para depois, mas nao entra enquanto a prioridade for polimento, testes e correcoes do fluxo principal.
 
 Criar um acervo de imagens prontas para o usuário usar em receitas, pastas, coleções e cardápios quando não tiver foto própria.
 

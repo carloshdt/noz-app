@@ -6,9 +6,27 @@ Este arquivo não é uma sprint nem um compromisso de entrega. É o lugar para g
 
 ---
 
+## Decisao Atual - Maio 2026
+
+Antes de novas implementacoes, a prioridade e deixar o app rodando bonito: corrigir falhas percebidas em teste manual, padronizar telas, reduzir atrito e manter Jest/TypeScript verdes.
+
+Pausado por enquanto:
+- Infra de email/Resend e ajustes externos de Supabase
+- Google/social login
+- Conta oficial `@noz`/Chef
+- Instagram
+- Acervo de imagens
+- Configuracoes, Ajuda e sidebar/drawer como fluxo visivel
+
+Esses itens continuam registrados aqui para nao se perderem, mas nao devem virar tarefa de implementacao agora.
+
+---
+
 ## Pendências de Infra
 
 ### Configurar domínio de email próprio (Resend)
+
+Status: pendente/pausado. Depende de configuracao externa e nao faz parte do ciclo atual de polish.
 
 Hoje, o free tier do Resend com `onboarding@resend.dev` só envia emails para o endereço da conta Resend. Para liberar reset de senha e confirmação de email para qualquer usuário, precisamos:
 
@@ -75,6 +93,8 @@ Notas:
 - Pensar em unidades, pluralização e formatos de data/medida desde o início
 
 ### Conta Oficial "Noz"
+
+Status: pausado. A ideia continua valida para popular o feed no futuro, mas agora a prioridade e deixar os fluxos atuais funcionais para o usuario real.
 
 Conta oficial do app para dar vida ao feed antes de existir massa crítica de usuários.
 

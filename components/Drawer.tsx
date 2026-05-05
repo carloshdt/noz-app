@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   avatarLetter: {
     fontSize: 24,
-    fontFamily: 'PlayfairDisplay_700Bold',
+    fontFamily: 'Lora_600SemiBold',
     color: '#8B4513',
   },
   nome: { fontFamily: 'Inter_700Bold', fontSize: 16, color: '#2C1810', marginBottom: 2 },

@@ -4,6 +4,37 @@ import { Plano, PlanoReceita, DiaPorcao, ItemCompra, Receita } from '../types';
 import { useAuth } from './useAuth';
 
 const planoVazio = (): Plano => ({ periodo: 'semanal', receitas: [] });
+const planosEmMemoria = new Map<string, Plano>();
+
+export function __limparPlanosEmMemoriaParaTestes() {
+  planosEmMemoria.clear();
+}
+
+export function gerarListaComprasDoPlano(plano: Plano, todasReceitas: Receita[]): ItemCompra[] {
+  const mapa = new Map<string, ItemCompra>();
+  plano.receitas.forEach(({ receitaId, batches, batchesSemDias }) => {
+    const totalBatches = batches + (batchesSemDias ?? 0);
+    const receita = todasReceitas.find((r) => r.id === receitaId);
+    if (!receita) return;
+    receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
+      const qtd = quantidade * totalBatches;
+      const chave = `${nome.toLowerCase()}|${unidade}`;
+      if (mapa.has(chave)) {
+        const item = mapa.get(chave)!;
+        item.quantidade += qtd;
+        if (!item.receitas.includes(receita.nome)) item.receitas.push(receita.nome);
+      } else {
+        mapa.set(chave, { nome, quantidade: qtd, unidade, receitas: [receita.nome] });
+      }
+    });
+  });
+  return Array.from(mapa.values());
+}
+
+async function salvarPlano(storageKey: string, plano: Plano) {
+  planosEmMemoria.set(storageKey, plano);
+  await AsyncStorage.setItem(storageKey, JSON.stringify(plano));
+}
 
 function migrarFormatoAntigo(dados: any): Plano | null {
   if (!Array.isArray(dados)) return null;
@@ -26,18 +57,37 @@ export function useCardapio() {
   const STORAGE_KEY = `@plano_${user?.id ?? 'anon'}`;
   const [plano, setPlano] = useState<Plano>(planoVazio());
 
-  const recarregar = useCallback(() => {
-    AsyncStorage.getItem(STORAGE_KEY).then((json) => {
-      if (!json) { setPlano(planoVazio()); return; }
+  const recarregar = useCallback(async () => {
+    const emMemoria = planosEmMemoria.get(STORAGE_KEY);
+    if (emMemoria) {
+      setPlano(emMemoria);
+      return emMemoria;
+    }
+
+    const json = await AsyncStorage.getItem(STORAGE_KEY);
+    if (!json) {
+      const vazio = planoVazio();
+      setPlano(vazio);
+      return vazio;
+    }
+
+    try {
       const dados = JSON.parse(json);
       const migrado = migrarFormatoAntigo(dados);
       if (migrado) {
         setPlano(migrado);
-        AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(migrado));
-      } else {
-        setPlano(dados as Plano);
+        await salvarPlano(STORAGE_KEY, migrado);
+        return migrado;
       }
-    });
+
+      const proximo = dados as Plano;
+      setPlano(proximo);
+      return proximo;
+    } catch {
+      const vazio = planoVazio();
+      setPlano(vazio);
+      return vazio;
+    }
   }, [STORAGE_KEY]);
 
   useEffect(() => {
@@ -69,7 +119,7 @@ export function useCardapio() {
           ? [...prev.receitas, { receitaId, batches, batchesSemDias: 0, dias }]
           : [...prev.receitas, { receitaId, batches: 0, batchesSemDias: batches }];
       const novo = { ...prev, receitas };
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      salvarPlano(STORAGE_KEY, novo);
       return novo;
     });
   }, [STORAGE_KEY]);
@@ -78,11 +128,14 @@ export function useCardapio() {
     setPlano((prev) => {
       const receitas = prev.receitas.map((r) => {
         if (r.receitaId !== receitaId) return r;
-        if (tipo === 'semDias') return { ...r, batchesSemDias: batches };
+        if (tipo === 'semDias') {
+          if (dias && dias.length > 0) return { ...r, batches, dias, batchesSemDias: 0 };
+          return { ...r, batchesSemDias: batches };
+        }
         return { ...r, batches, dias };
       });
       const novo = { ...prev, receitas };
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      salvarPlano(STORAGE_KEY, novo);
       return novo;
     });
   }, [STORAGE_KEY]);
@@ -93,7 +146,7 @@ export function useCardapio() {
         r.receitaId === receitaId ? { ...r, dias } : r
       );
       const novo = { ...prev, receitas };
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      salvarPlano(STORAGE_KEY, novo);
       return novo;
     });
   }, [STORAGE_KEY]);
@@ -101,7 +154,7 @@ export function useCardapio() {
   const removerReceita = useCallback((receitaId: string) => {
     setPlano((prev) => {
       const novo = { ...prev, receitas: prev.receitas.filter((r) => r.receitaId !== receitaId) };
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      salvarPlano(STORAGE_KEY, novo);
       return novo;
     });
   }, [STORAGE_KEY]);
@@ -109,30 +162,13 @@ export function useCardapio() {
   const limpar = useCallback(() => {
     setPlano((prev) => {
       const novo = { ...prev, receitas: [] };
-      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(novo));
+      salvarPlano(STORAGE_KEY, novo);
       return novo;
     });
   }, [STORAGE_KEY]);
 
   const gerarListaCompras = useCallback((todasReceitas: Receita[]): ItemCompra[] => {
-    const mapa = new Map<string, ItemCompra>();
-    plano.receitas.forEach(({ receitaId, batches, batchesSemDias }) => {
-      const totalBatches = batches + (batchesSemDias ?? 0);
-      const receita = todasReceitas.find((r) => r.id === receitaId);
-      if (!receita) return;
-      receita.ingredientes.forEach(({ nome, quantidade, unidade }) => {
-        const qtd = quantidade * totalBatches;
-        const chave = `${nome.toLowerCase()}|${unidade}`;
-        if (mapa.has(chave)) {
-          const item = mapa.get(chave)!;
-          item.quantidade += qtd;
-          if (!item.receitas.includes(receita.nome)) item.receitas.push(receita.nome);
-        } else {
-          mapa.set(chave, { nome, quantidade: qtd, unidade, receitas: [receita.nome] });
-        }
-      });
-    });
-    return Array.from(mapa.values());
+    return gerarListaComprasDoPlano(plano, todasReceitas);
   }, [plano]);
 
   return { plano, adicionarReceita, editarDiasReceita, atribuirDias, removerReceita, limpar, gerarListaCompras, recarregar };

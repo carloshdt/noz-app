@@ -1,5 +1,7 @@
 # Autenticação — Plano de Implementação
 
+**Status atual:** parcial/pausado para social login. Email/senha continua sendo o fluxo funcional principal; Google/Apple ficam guardados para depois do ciclo de polish e estabilizacao.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Implementar autenticação completa no Noz com Supabase (email/senha + Google + Apple), roteamento baseado em sessão e suporte offline via AsyncStorage.

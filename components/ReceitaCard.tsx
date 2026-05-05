@@ -26,17 +26,25 @@ export function ReceitaCard({ receita, onPress, criadorNome }: Props) {
           </View>
         )}
       </View>
-      <View className="flex-1 p-3 gap-1 justify-center">
-        <AppText variant="heading" className="text-[15px]" numberOfLines={2}>
-          {receita.nome}
-        </AppText>
-        <View className="flex-row items-center gap-1">
-          <Clock size={12} color="#8C7B6B" />
-          <AppText variant="muted" className="text-[12px]">{receita.tempoPreparo} min</AppText>
+      <View className="flex-1 p-3 gap-1 justify-center relative">
+        <View style={{ position: 'absolute', top: 8, right: 8, transform: [{ scale: 0.82 }] }}>
+          <Badge
+            label={receita.dificuldade}
+            variant={receita.dificuldade === 'Fácil' ? 'accent' : 'default'}
+          />
+        </View>
+        <View style={{ paddingRight: 56 }}>
+          <AppText variant="heading" className="text-[15px]" numberOfLines={2}>
+            {receita.nome}
+          </AppText>
+          <View className="flex-row items-center gap-1 mt-1">
+            <Clock size={12} color="#8C7B6B" />
+            <AppText variant="muted" className="text-[12px]">{receita.tempoPreparo} min</AppText>
+          </View>
         </View>
         {criadorNome ? (
-          <AppText variant="muted" style={{ fontSize: 11, marginTop: 2 }}>
-            Importada de {criadorNome}
+          <AppText variant="muted" style={{ fontSize: 11, marginTop: 2, textAlign: 'right', alignSelf: 'stretch' }}>
+            Compartilhada por {criadorNome}
           </AppText>
         ) : null}
       </View>
