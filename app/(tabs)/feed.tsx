@@ -8,6 +8,7 @@ import { useFeed } from '../../hooks/useFeed';
 import { CATEGORIAS } from '../../constants/categorias';
 import { useSalvarReceita } from '../../hooks/useSalvarReceita';
 import { useCoracoes } from '../../hooks/useCoracoes';
+import { useAuth } from '../../hooks/useAuth';
 import { FeedCard } from '../../components/FeedCard';
 import { AppText } from '../../components/ui/AppText';
 import { supabase } from '../../lib/supabase';
@@ -52,12 +53,13 @@ function FilterOption({ label, ativo, onPress }: FilterOptionProps) {
 }
 
 export default function FeedScreen() {
+  const { user } = useAuth();
   const { receitas, loading, temMais, recarregar, carregarMais } = useFeed();
   const receitaIds = useMemo(() => receitas.map((r) => r.id), [receitas]);
   const { coracoes, carregarCorações: carregarCoracoes, toggleCoracao } = useCoracoes(receitaIds);
   const { salvar, remover, salvando } = useSalvarReceita();
   const [itemHeight, setItemHeight] = useState(0);
-  const [salvas, setSalvas] = useState<Map<string, string>>(new Map());
+  const [salvas, setSalvas] = useState<Set<string>>(new Set());
 
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [termo, setTermo] = useState('');
@@ -124,6 +126,17 @@ export default function FeedScreen() {
   useFocusEffect(useCallback(() => {
     recarregar();
   }, [recarregar]));
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from('recipe_overrides')
+      .select('recipe_id')
+      .eq('user_id', user.id)
+      .then(({ data }) => {
+        if (data) setSalvas(new Set(data.map((o) => o.recipe_id)));
+      });
+  }, [user]);
 
   useEffect(() => {
     if (receitaIds.length > 0) carregarCoracoes(receitaIds);
@@ -222,14 +235,13 @@ export default function FeedScreen() {
 
   async function handleSalvar(receitaId: string, criadorId: string) {
     if (salvando || salvas.has(receitaId)) return;
-    const copyId = await salvar(receitaId, criadorId);
-    if (copyId) setSalvas((prev) => new Map(prev).set(receitaId, copyId));
+    const id = await salvar(receitaId, criadorId);
+    if (id) setSalvas((prev) => new Set(prev).add(receitaId));
   }
 
   async function handleRemover(receitaId: string) {
-    const copyId = salvas.get(receitaId);
-    if (copyId) await remover(copyId);
-    setSalvas((prev) => { const next = new Map(prev); next.delete(receitaId); return next; });
+    await remover(receitaId);
+    setSalvas((prev) => { const next = new Set(prev); next.delete(receitaId); return next; });
   }
 
   const receitasFeedFiltradas = useMemo(() => {
