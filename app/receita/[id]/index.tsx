@@ -57,7 +57,9 @@ export default function ReceitaDetalhesScreen() {
   const { coracoes, carregarCorações: carregarCoracoes, toggleCoracao } = useCoracoes(receita ? [receita.id] : []);
   const coracao = coracoes.get(receita?.id ?? '');
   const { total: totalComentarios, carregar: carregarComentarios } = useComentarios(receita?.id ?? '');
-  const podeEditar = !!receitaLocal && receita?.user_id === user?.id;
+  const isOwnRecipe = receita?.user_id === user?.id && !receita?.fonte_receita_id;
+  const isSavedRecipe = !!receita?.fonte_receita_id;
+  const podeEditar = !!receitaLocal && (isOwnRecipe || isSavedRecipe);
   const [originalAtualizada, setOriginalAtualizada] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
   const [criadorOriginal, setCriadorOriginal] = useState<{ id: string; nome: string; foto_url?: string } | null>(null);
@@ -226,7 +228,7 @@ export default function ReceitaDetalhesScreen() {
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10, backgroundColor: 'white', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
             >
               <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <AppText variant="muted" style={{ fontSize: 11, textAlign: 'right' }}>Compartilhada por</AppText>
+                <AppText variant="muted" style={{ fontSize: 11, textAlign: 'right' }}>Salva de</AppText>
                 <AppText style={{ fontWeight: '600', fontSize: 14, textAlign: 'right' }}>{criadorOriginal.nome}</AppText>
               </View>
               <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
@@ -283,9 +285,11 @@ export default function ReceitaDetalhesScreen() {
           </Pressable>
           {podeEditar && (
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable onPress={handleTogglePublicar} className="bg-black/30 rounded-full p-2">
-                {publica ? <Eye size={20} color="white" /> : <EyeOff size={20} color="white" />}
-              </Pressable>
+              {isOwnRecipe && (
+                <Pressable onPress={handleTogglePublicar} className="bg-black/30 rounded-full p-2">
+                  {publica ? <Eye size={20} color="white" /> : <EyeOff size={20} color="white" />}
+                </Pressable>
+              )}
               <Pressable onPress={() => setMenuAberto(true)} className="bg-black/30 rounded-full p-2">
                 <MoreVertical size={20} color="white" />
               </Pressable>
@@ -324,23 +328,25 @@ export default function ReceitaDetalhesScreen() {
                 </View>
               </Pressable>
 
-              {/* Toggle público */}
-              <Pressable
-                onPress={handleTogglePublicar}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 16 }}
-              >
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: publica ? '#F0FDF4' : '#F5F5F5', alignItems: 'center', justifyContent: 'center' }}>
-                  {publica ? <Eye size={18} color="#166534" /> : <EyeOff size={18} color="#6B7280" />}
-                </View>
-                <View>
-                  <AppText style={{ fontWeight: '600', color: publica ? '#166534' : '#374151' }}>
-                    {publica ? 'Pública' : 'Privada'}
-                  </AppText>
-                  <AppText variant="muted" style={{ fontSize: 12 }}>
-                    {publica ? 'Toque para tornar privada' : 'Toque para tornar pública'}
-                  </AppText>
-                </View>
-              </Pressable>
+              {/* Toggle público — só para receitas próprias */}
+              {isOwnRecipe && (
+                <Pressable
+                  onPress={handleTogglePublicar}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 20, paddingVertical: 16 }}
+                >
+                  <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: publica ? '#F0FDF4' : '#F5F5F5', alignItems: 'center', justifyContent: 'center' }}>
+                    {publica ? <Eye size={18} color="#166534" /> : <EyeOff size={18} color="#6B7280" />}
+                  </View>
+                  <View>
+                    <AppText style={{ fontWeight: '600', color: publica ? '#166534' : '#374151' }}>
+                      {publica ? 'Pública' : 'Privada'}
+                    </AppText>
+                    <AppText variant="muted" style={{ fontSize: 12 }}>
+                      {publica ? 'Toque para tornar privada' : 'Toque para tornar pública'}
+                    </AppText>
+                  </View>
+                </Pressable>
+              )}
 
               {/* Divisor */}
               <View style={{ height: 1, backgroundColor: '#F3F4F6', marginHorizontal: 20, marginVertical: 4 }} />
