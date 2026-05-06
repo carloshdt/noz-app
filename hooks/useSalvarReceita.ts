@@ -86,10 +86,20 @@ export function useSalvarReceita() {
   const remover = useCallback(
     async (recipeId: string): Promise<void> => {
       if (!user) return;
+      const { data: receita } = await supabase
+        .from('receitas')
+        .select('user_id')
+        .eq('id', recipeId)
+        .single();
+
       await supabase
         .from('recipe_overrides')
         .delete()
         .match({ user_id: user.id, recipe_id: recipeId });
+
+      if (receita?.user_id) {
+        await supabase.rpc('decrementar_importacoes', { perfil_id: receita.user_id });
+      }
     },
     [user]
   );
