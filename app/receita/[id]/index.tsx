@@ -185,28 +185,26 @@ export default function ReceitaDetalhesScreen() {
           </LinearGradient>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, paddingHorizontal: 16, paddingVertical: 12, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#F5F0EB' }}>
-          <Pressable
-            onPress={() => toggleCoracao(receita.id)}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Heart
-              size={20}
-              color="#8B4513"
-              fill={coracao?.meu ? '#8B4513' : 'none'}
-            />
-            <AppText style={{ fontSize: 13, color: '#2C1810' }}>
-              {coracao?.total ?? 0}
-            </AppText>
-          </Pressable>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <MessageCircle size={20} color="#8B4513" />
-            <AppText style={{ fontSize: 13, color: '#2C1810' }}>{totalComentarios}</AppText>
-          </View>
-        </View>
-
         <View className="px-4 py-6 gap-6 pb-12">
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+              <Pressable
+                onPress={() => toggleCoracao(receita.id)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Heart size={20} color="#8B4513" fill={coracao?.meu ? '#8B4513' : 'none'} />
+                <AppText style={{ fontSize: 13, color: '#2C1810' }}>{coracao?.total ?? 0}</AppText>
+              </Pressable>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <MessageCircle size={20} color="#8B4513" />
+                <AppText style={{ fontSize: 13, color: '#2C1810' }}>{totalComentarios}</AppText>
+              </View>
+            </View>
+            <AppText variant="muted" style={{ flex: 1, textAlign: 'right', fontSize: 12 }}>
+              {new Date(receita.criadaEm).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </AppText>
+          </View>
           {originalAtualizada && (
             <Pressable
               onPress={() => router.push(`/receita/${receita.fonte_receita_id}` as any)}
