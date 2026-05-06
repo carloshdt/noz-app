@@ -1,16 +1,17 @@
 import { Pressable, View, Image } from 'react-native';
 import { AppText } from './ui/AppText';
-import { Badge } from './ui/Badge';
-import { Clock } from 'lucide-react-native';
+import { Clock, Users, Heart, MessageCircle } from 'lucide-react-native';
 import { Receita } from '../types';
 
 type Props = {
   receita: Receita;
   onPress: () => void;
   criadorNome?: string;
+  totalCoracoes?: number;
+  totalComentarios?: number;
 };
 
-export function ReceitaCard({ receita, onPress, criadorNome }: Props) {
+export function ReceitaCard({ receita, onPress, criadorNome, totalCoracoes = 0, totalComentarios = 0 }: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -26,27 +27,39 @@ export function ReceitaCard({ receita, onPress, criadorNome }: Props) {
           </View>
         )}
       </View>
-      <View className="flex-1 p-3 gap-1 justify-center relative">
-        <View style={{ position: 'absolute', top: 8, right: 8, transform: [{ scale: 0.82 }] }}>
-          <Badge
-            label={receita.dificuldade}
-            variant={receita.dificuldade === 'Fácil' ? 'accent' : 'default'}
-          />
-        </View>
-        <View style={{ paddingRight: 56 }}>
-          <AppText variant="heading" className="text-[15px]" numberOfLines={2}>
+      <View className="flex-1" style={{ paddingTop: 4, paddingBottom: 4, paddingLeft: 8, paddingRight: 12 }}>
+        <View>
+          <AppText variant="heading" className="text-[12px]" numberOfLines={2}>
             {receita.nome}
           </AppText>
-          <View className="flex-row items-center gap-1 mt-1">
-            <Clock size={12} color="#8C7B6B" />
-            <AppText variant="muted" className="text-[12px]">{receita.tempoPreparo} min</AppText>
+          <View className="flex-row items-center gap-3 mt-1">
+            <View className="flex-row items-center gap-1">
+              <Clock size={9} color="#8C7B6B" />
+              <AppText variant="muted" className="text-[10px]">{receita.tempoPreparo} min</AppText>
+            </View>
+            <View className="flex-row items-center gap-1">
+              <Users size={9} color="#8C7B6B" />
+              <AppText variant="muted" className="text-[10px]">{receita.porcoes} porç.</AppText>
+            </View>
           </View>
         </View>
-        {criadorNome ? (
-          <AppText variant="muted" style={{ fontSize: 11, marginTop: 2, textAlign: 'right', alignSelf: 'stretch' }}>
-            Compartilhada por {criadorNome}
-          </AppText>
-        ) : null}
+        <View style={{ position: 'absolute', bottom: 4, left: 8, right: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Heart size={15} color="#8C7B6B" />
+              <AppText variant="muted" style={{ fontSize: 10 }}>{totalCoracoes}</AppText>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <MessageCircle size={15} color="#8C7B6B" />
+              <AppText variant="muted" style={{ fontSize: 10 }}>{totalComentarios}</AppText>
+            </View>
+          </View>
+          {criadorNome ? (
+            <AppText variant="muted" style={{ fontSize: 10 }}>
+              Salva de {criadorNome}
+            </AppText>
+          ) : null}
+        </View>
       </View>
     </Pressable>
   );

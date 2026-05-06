@@ -49,6 +49,7 @@ export default function ReceitasScreen() {
   const [busca, setBusca] = useState('');
   const [categoriasAtivas, setCategoriasAtivas] = useState<Set<string>>(new Set());
   const [criadores, setCriadores] = useState<Record<string, string>>({});
+  const [contagens, setContagens] = useState<Record<string, { coracoes: number; comentarios: number }>>({});
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [filtroTempo, setFiltroTempo] = useState<number | null>(null);
   const [filtroDificuldade, setFiltroDificuldade] = useState<string | null>(null);
@@ -84,6 +85,22 @@ export default function ReceitasScreen() {
             setCriadores(result);
           });
       });
+  }, [receitas]);
+
+  useEffect(() => {
+    if (!receitas.length) { setContagens({}); return; }
+    const ids = receitas.map((r) => r.id);
+
+    Promise.all([
+      supabase.from('recipe_hearts').select('recipe_id').in('recipe_id', ids),
+      supabase.from('comments').select('recipe_id').in('recipe_id', ids),
+    ]).then(([{ data: hearts }, { data: comments }]) => {
+      const result: Record<string, { coracoes: number; comentarios: number }> = {};
+      ids.forEach((id) => { result[id] = { coracoes: 0, comentarios: 0 }; });
+      hearts?.forEach(({ recipe_id }) => { if (result[recipe_id]) result[recipe_id].coracoes++; });
+      comments?.forEach(({ recipe_id }) => { if (result[recipe_id]) result[recipe_id].comentarios++; });
+      setContagens(result);
+    });
   }, [receitas]);
 
   function toggleCategoria(cat: string) {
@@ -252,6 +269,8 @@ export default function ReceitasScreen() {
               receita={item}
               onPress={() => router.push(`/receita/${item.id}`)}
               criadorNome={item.fonte_receita_id ? criadores[item.fonte_receita_id] : undefined}
+              totalCoracoes={contagens[item.id]?.coracoes}
+              totalComentarios={contagens[item.id]?.comentarios}
             />
           )}
         />

@@ -14,7 +14,7 @@ type Props = { label: string; variant?: Variant };
 export function Badge({ label, variant = 'default' }: Props) {
   const { bg, text } = variants[variant];
   return (
-    <View className={`${bg} rounded-full px-2 py-0.5`}>
+    <View className={`${bg} rounded-full px-1.5 py-0.5`}>
       <AppText className={`font-sans text-[11px] ${text}`}>{label}</AppText>
     </View>
   );

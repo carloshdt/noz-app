@@ -185,7 +185,7 @@ export default function ReceitaDetalhesScreen() {
           </LinearGradient>
         </View>
 
-        <View className="px-4 py-6 gap-6 pb-12">
+        <View className="px-4 gap-6 pb-12" style={{ paddingTop: 8, paddingBottom: 48 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
               <Pressable
@@ -196,15 +196,39 @@ export default function ReceitaDetalhesScreen() {
                 <Heart size={20} color="#8B4513" fill={coracao?.meu ? '#8B4513' : 'none'} />
                 <AppText style={{ fontSize: 13, color: '#2C1810' }}>{coracao?.total ?? 0}</AppText>
               </Pressable>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Pressable
+                onPress={() => router.push({ pathname: '/comentarios/[id]', params: { id: receita.id, receitaUserId: receita.user_id } } as any)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
                 <MessageCircle size={20} color="#8B4513" />
                 <AppText style={{ fontSize: 13, color: '#2C1810' }}>{totalComentarios}</AppText>
-              </View>
+              </Pressable>
             </View>
             <AppText variant="muted" style={{ flex: 1, textAlign: 'right', fontSize: 12 }}>
               {new Date(receita.criadaEm).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
             </AppText>
           </View>
+          {criadorOriginal && (
+            <Pressable
+              onPress={() => router.push(`/perfil/${criadorOriginal.id}` as any)}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'white', paddingHorizontal: 16, paddingVertical: 6, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#E5E7EB', marginTop: -16, marginHorizontal: -16 }}
+            >
+              <View style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                {criadorOriginal.foto_url
+                  ? <Image source={{ uri: criadorOriginal.foto_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                  : <AppText style={{ color: 'white', fontWeight: '700', fontSize: 12 }}>
+                      {criadorOriginal.nome.trim().split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
+                    </AppText>
+                }
+              </View>
+              <AppText variant="muted" style={{ fontSize: 13 }}>
+                Salva de <AppText style={{ fontWeight: '600', fontSize: 13, color: '#2C1810' }}>{criadorOriginal.nome}</AppText>
+              </AppText>
+              <AppText variant="muted" style={{ fontSize: 12, marginLeft: 'auto' }}>Ver perfil →</AppText>
+            </Pressable>
+          )}
+
           {originalAtualizada && (
             <Pressable
               onPress={() => router.push(`/receita/${receita.fonte_receita_id}` as any)}
@@ -216,30 +240,9 @@ export default function ReceitaDetalhesScreen() {
             </Pressable>
           )}
 
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-2" style={{ marginVertical: -10 }}>
             {receita.categorias.map((c) => <Badge key={c} label={c} variant="accent" />)}
           </View>
-
-          {criadorOriginal && (
-            <Pressable
-              onPress={() => router.push(`/perfil/${criadorOriginal.id}` as any)}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10, backgroundColor: 'white', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#E5E7EB' }}
-            >
-              <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                <AppText variant="muted" style={{ fontSize: 11, textAlign: 'right' }}>Salva de</AppText>
-                <AppText style={{ fontWeight: '600', fontSize: 14, textAlign: 'right' }}>{criadorOriginal.nome}</AppText>
-              </View>
-              <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#8B4513', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                {criadorOriginal.foto_url
-                  ? <Image source={{ uri: criadorOriginal.foto_url }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-                  : <AppText style={{ color: 'white', fontWeight: '700', fontSize: 13 }}>
-                      {criadorOriginal.nome.trim().split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase()}
-                    </AppText>
-                }
-              </View>
-              <AppText variant="muted" style={{ fontSize: 12 }}>Ver perfil →</AppText>
-            </Pressable>
-          )}
 
           <View className="flex-row justify-around">
             <View className="items-center gap-1">
